@@ -1,0 +1,68 @@
+/**
+ * Design Tokens
+ * PanelForge - Forge-themed design system
+ */
+
+@layer base {
+  :root {
+    /* Forge Accent Colors */
+    --forge-ember: 0.65 0.18 45;
+    --forge-copper: 0.55 0.15 55;
+    --forge-bronze: 0.50 0.12 65;
+
+    /* Spacing Scale */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+
+    /* Border Widths */
+    --border-thin: 1px;
+    --border-medium: 2px;
+    --border-thick: 3px;
+
+    /* Touch Targets */
+    --touch-target-min: 44px;
+
+    /* Animation Durations */
+    --duration-fast: 150ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+
+    /* Z-Index Scale */
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-fixed: 30;
+    --z-modal-backdrop: 40;
+    --z-modal: 50;
+    --z-popover: 60;
+    --z-tooltip: 70;
+  }
+
+  [data-theme="doodle-dark"] {
+    --forge-ember: 0.7 0.2 40;
+    --forge-copper: 0.6 0.18 50;
+    --forge-bronze: 0.55 0.14 60;
+  }
+}
+
+@layer utilities {
+  .touch-target {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+  }
+
+  .brutal-hover {
+    @apply transition-all duration-200;
+  }
+
+  .brutal-hover:hover {
+    @apply shadow-brutal-lg -translate-x-0.5 -translate-y-0.5;
+  }
+
+  .brutal-hover:active {
+    @apply shadow-brutal translate-x-0 translate-y-0;
+  }
+}
