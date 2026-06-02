@@ -24,7 +24,7 @@ export function ProjectsPage() {
   const [deleteTarget, setDeleteTarget] = useState<number[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { theme, toggleTheme } = useThemeStore();
-  const isDark = theme.endsWith("dark");
+  const isDark = !theme.endsWith("light");
   const { openModal: openSettingsModal } = useSettingsStore();
 
   const {
@@ -37,7 +37,6 @@ export function ProjectsPage() {
     retry: 1,
   });
 
-  // 显示加载错误
   useEffect(() => {
     if (error) {
       const apiError = error instanceof ApiError ? error : null;
@@ -108,8 +107,21 @@ export function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-base-100 font-sans">
-      <header className="flex items-center justify-between px-4 h-10 border-b border-base-content/10">
-        <Link to="/" className="font-comic text-lg text-primary font-bold tracking-wider">PanelForge</Link>
+      <header className="flex items-center justify-between px-4 h-10 glass border-b border-base-300/30">
+        <Link to="/" className="flex items-center gap-2 text-base font-bold tracking-tight">
+          <svg width="18" height="18" viewBox="0 0 32 32" className="flex-shrink-0" aria-hidden="true">
+            <defs>
+              <linearGradient id="pf-pp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#06B6D4" />
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="7" fill="url(#pf-pp-grad)" />
+            <path d="M9 8h5v3.5h-1.5v8H9V8zm9 0h5v3.5h-1.5v8H18V8z" fill="#0B0A12" opacity="0.85" />
+            <rect x="8" y="22" width="16" height="2" rx="1" fill="#0B0A12" opacity="0.5" />
+          </svg>
+          <span className="gradient-text">PanelForge</span>
+        </Link>
         <div className="flex items-center gap-1">
           <Link to="/" className="btn btn-ghost btn-xs !px-1 !min-h-0 !h-6 text-xs">新建</Link>
           <button
@@ -131,9 +143,9 @@ export function ProjectsPage() {
         </div>
       </header>
       <div className="flex flex-col min-h-[calc(100vh-40px)]">
-        <header className="bg-base-100 border-b-3 border-base-content/30 px-6 py-4">
+        <header className="bg-base-100 border-b border-base-300/30 px-6 py-4">
           <h1 className="text-2xl font-heading font-bold">
-            <span className="underline-sketch">全部项目</span>
+            <span className="underline-accent">全部项目</span>
           </h1>
           <div className="mt-3 flex items-center gap-3">
             <label className="cursor-pointer select-none">
@@ -162,7 +174,7 @@ export function ProjectsPage() {
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12 gap-4">
                 <PencilIcon className="w-6 h-6 animate-pulse" aria-hidden="true" />
-                <p className="font-sketch text-lg text-base-content/70">加载中...</p>
+                <p className="text-lg text-base-content/70">加载中...</p>
               </div>
             ) : error ? (
               <Card className="text-center py-8">
@@ -170,10 +182,10 @@ export function ProjectsPage() {
                 <p className="text-error font-bold">加载项目失败，请重试。</p>
               </Card>
             ) : !projects || projects.length === 0 ? (
-              <Card className="text-center py-12">
-                <DocumentTextIcon className="w-6 h-6 mx-auto mb-4" aria-hidden="true" />
+              <Card className="text-center py-16">
+                <DocumentTextIcon className="w-8 h-8 mx-auto mb-4 text-primary/40" aria-hidden="true" />
                 <p className="text-lg font-heading font-bold mb-2">暂无项目</p>
-                <p className="text-base-content/60">开始创作你的第一个故事吧！</p>
+                <p className="text-sm text-base-content/50">开始创作你的第一个故事吧！</p>
               </Card>
             ) : (
               <div className="grid gap-3">
@@ -183,7 +195,7 @@ export function ProjectsPage() {
                     to={`/project/${project.id}`}
                     className="block"
                   >
-                    <Card className="group transition-transform duration-200 hover:-translate-y-1 cursor-pointer">
+                    <Card className="group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-sm cursor-pointer">
                       <div className="flex items-center justify-between">
                         <label
                           className="mr-2 cursor-pointer"
@@ -206,25 +218,25 @@ export function ProjectsPage() {
                               {project.title}
                             </span>
                             <span
-                              className={`badge badge-sm font-bold ${
+                              className={`badge badge-sm font-semibold ${
                                 project.status === "ready"
-                                  ? "bg-success/20 text-success-content"
+                                  ? "bg-success/15 text-success border-success/20"
                                   : project.status === "processing"
-                                    ? "bg-warning/20 text-warning-content animate-pulse"
-                                    : "bg-neutral/20"
+                                    ? "bg-warning/15 text-warning border-warning/20 animate-pulse"
+                                    : "bg-base-300/50 text-base-content/40 border-base-300/30"
                               }`}
                             >
                               {project.status}
                             </span>
                           </div>
                           {project.story && (
-                            <p className="text-sm text-base-content/60 truncate mt-1">
+                            <p className="text-sm text-base-content/50 truncate mt-1">
                               {project.story}
                             </p>
                           )}
                         </div>
                         <button
-                          className="p-2 opacity-0 group-hover:opacity-100 hover:bg-error/20 rounded-lg transition-all cursor-pointer"
+                          className="p-2 opacity-0 group-hover:opacity-100 hover:bg-error/10 rounded-lg transition-all cursor-pointer"
                           onClick={(e) => handleDeleteClick(project.id, e)}
                           title="删除"
                         >
@@ -240,7 +252,6 @@ export function ProjectsPage() {
         </main>
       </div>
 
-      {/* 删除确认弹窗 */}
       <ConfirmModal
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

@@ -79,7 +79,7 @@ export function UniverseDetailPage() {
 	if (!universe) {
 		return (
 			<div className="min-h-screen bg-base-100 flex items-center justify-center">
-				<p className="text-base-content/50">宇宙不存在</p>
+				<p className="text-base-content/40">宇宙不存在</p>
 			</div>
 		);
 	}
@@ -93,17 +93,16 @@ export function UniverseDetailPage() {
 
 	return (
 		<div className="min-h-screen bg-base-100 font-sans">
-			<header className="navbar bg-base-200 border-b border-base-300">
+			<header className="flex items-center px-4 h-10 glass border-b border-base-300/30">
 				<div className="flex-1">
 					<Link to="/universes" className="btn btn-ghost btn-sm">
-						← 返回宇宙列表
+						&larr; 返回宇宙列表
 					</Link>
 				</div>
 				<div className="flex-1" />
 			</header>
 
 			<main className="container mx-auto px-4 py-8 max-w-6xl">
-				{/* Back */}
 				<Link
 					to="/universes"
 					className="btn btn-ghost btn-sm mb-4 inline-flex items-center gap-1"
@@ -112,47 +111,43 @@ export function UniverseDetailPage() {
 					返回宇宙列表
 				</Link>
 
-				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-heading font-bold underline-sketch">
+					<h1 className="text-3xl font-heading font-bold underline-accent">
 						{u.name}
 					</h1>
 					{u.description && (
-						<p className="text-base-content/60 mt-2">{u.description}</p>
+						<p className="text-base-content/50 mt-2">{u.description}</p>
 					)}
 				</div>
 
-				{/* World setting */}
 				{u.world_setting && (
 					<Card className="mb-6" variant="primary">
 						<h2 className="text-lg font-heading font-bold mb-2 flex items-center gap-2">
-							<GlobeAltIcon className="w-5 h-5" aria-hidden="true" />
+							<GlobeAltIcon className="w-5 h-5 text-primary" aria-hidden="true" />
 							世界观设定
 						</h2>
-						<p className="text-sm text-base-content/70 whitespace-pre-wrap">
+						<p className="text-sm text-base-content/60 whitespace-pre-wrap">
 							{u.world_setting}
 						</p>
 					</Card>
 				)}
 
-				{/* Style rules */}
 				{u.style_rules && (
 					<Card className="mb-6" variant="accent">
 						<h2 className="text-lg font-heading font-bold mb-2 flex items-center gap-2">
-							<PaintBrushIcon className="w-5 h-5" aria-hidden="true" />
+							<PaintBrushIcon className="w-5 h-5 text-accent" aria-hidden="true" />
 							统一风格规则
 						</h2>
-						<p className="text-sm text-base-content/70 whitespace-pre-wrap">
+						<p className="text-sm text-base-content/60 whitespace-pre-wrap">
 							{u.style_rules}
 						</p>
 					</Card>
 				)}
 
-				{/* Chapters */}
 				<Card className="mb-6">
 					<div className="flex items-center justify-between mb-4">
 						<h2 className="text-lg font-heading font-bold flex items-center gap-2">
-							<BookOpenIcon className="w-5 h-5" />
+							<BookOpenIcon className="w-5 h-5 text-primary" />
 							章节列表
 						</h2>
 						<Button size="sm" onClick={() => setShowAddProject(true)}>
@@ -162,7 +157,7 @@ export function UniverseDetailPage() {
 					</div>
 
 					{u.chapters.length === 0 ? (
-						<p className="text-sm text-base-content/40 text-center py-8">
+						<p className="text-sm text-base-content/30 text-center py-8">
 							还没有章节，点击"添加项目"开始
 						</p>
 					) : (
@@ -174,10 +169,10 @@ export function UniverseDetailPage() {
 								.map((ch) => (
 									<div
 										key={ch.id}
-										className="flex items-center justify-between p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors"
+										className="flex items-center justify-between p-3 rounded-xl bg-base-200/40 hover:bg-base-200/60 transition-colors border border-base-300/20"
 									>
 										<div className="flex items-center gap-3">
-											<span className="badge badge-primary badge-sm font-bold">
+											<span className="badge badge-primary badge-sm font-semibold">
 												第{ch.chapter_number ?? "?"}章
 											</span>
 											<Link
@@ -192,7 +187,7 @@ export function UniverseDetailPage() {
 										</div>
 										<button
 											type="button"
-											className="btn btn-ghost btn-xs text-error/50 hover:text-error"
+											className="btn btn-ghost btn-xs text-error/40 hover:text-error"
 											onClick={() => removeProjectMutation.mutate(ch.project_id)}
 										>
 											<TrashIcon className="w-3.5 h-3.5" />
@@ -203,15 +198,14 @@ export function UniverseDetailPage() {
 					)}
 				</Card>
 
-				{/* Shared Characters */}
 				<Card>
 					<h2 className="text-lg font-heading font-bold mb-4 flex items-center gap-2">
-						<UserGroupIcon className="w-5 h-5" aria-hidden="true" />
+						<UserGroupIcon className="w-5 h-5 text-primary" aria-hidden="true" />
 						共享角色库
 					</h2>
 
 					{u.shared_characters.length === 0 ? (
-						<p className="text-sm text-base-content/40 text-center py-8">
+						<p className="text-sm text-base-content/30 text-center py-8">
 							还没有共享角色，从项目角色中提升
 						</p>
 					) : (
@@ -224,7 +218,6 @@ export function UniverseDetailPage() {
 				</Card>
 			</main>
 
-			{/* Add Project Modal */}
 			{showAddProject && (
 				<Modal
 					isOpen={showAddProject}
@@ -232,7 +225,7 @@ export function UniverseDetailPage() {
 					title="添加项目到宇宙"
 				>
 					{availableProjects.length === 0 ? (
-						<p className="text-sm text-base-content/50 text-center py-6">
+						<p className="text-sm text-base-content/40 text-center py-6">
 							没有可添加的项目（所有项目已在本宇宙中）
 						</p>
 					) : (
@@ -241,7 +234,7 @@ export function UniverseDetailPage() {
 								<button
 									key={p.id}
 									type="button"
-									className="w-full text-left p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors flex items-center justify-between"
+									className="w-full text-left p-3 rounded-xl bg-base-200/40 hover:bg-base-200/60 transition-colors flex items-center justify-between border border-base-300/20"
 									onClick={() => {
 										const nextChapter =
 											u.chapters.length > 0
@@ -258,7 +251,7 @@ export function UniverseDetailPage() {
 										<span className="font-heading font-bold text-sm">
 											{p.title}
 										</span>
-										<span className="text-xs text-base-content/40 ml-2">
+										<span className="text-xs text-base-content/30 ml-2">
 											{p.status}
 										</span>
 									</div>

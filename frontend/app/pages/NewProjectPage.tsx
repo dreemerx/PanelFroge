@@ -66,12 +66,10 @@ export function NewProjectPage() {
   return (
     <div className="min-h-screen bg-base-100">
       {/* Header */}
-      <header className="navbar bg-base-200 border-b border-base-300">
-        <div className="flex-1">
-          <Link to="/" className="btn btn-ghost">
-            ← 返回
-          </Link>
-        </div>
+      <header className="flex items-center px-4 h-10 glass border-b border-base-300/30">
+        <Link to="/" className="btn btn-ghost btn-sm">
+          &larr; 返回
+        </Link>
       </header>
 
       {/* Main content */}
@@ -88,8 +86,8 @@ export function NewProjectPage() {
           <Card
             title={
               <span className="inline-flex items-center gap-2">
-                <DocumentTextIcon className="w-5 h-5" aria-hidden="true" />
-                <span className="underline-sketch">讲述你的故事</span>
+                <DocumentTextIcon className="w-5 h-5 text-primary" aria-hidden="true" />
+                <span className="underline-accent">讲述你的故事</span>
               </span>
             }
           >
@@ -108,7 +106,7 @@ export function NewProjectPage() {
                 </label>
                 <textarea
                   id="project-story"
-                  className="textarea textarea-bordered bg-base-200 h-48"
+                  className="textarea textarea-bordered bg-base-200/50 h-48 border-base-300/50"
                   placeholder="很久很久以前..."
                   value={formData.story}
                   onChange={(e) =>
@@ -118,7 +116,7 @@ export function NewProjectPage() {
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-sm font-bold">所属宇宙（可选）</span>
+                  <span className="label-text text-sm font-semibold">所属宇宙（可选）</span>
                 </label>
                 <UniverseSelector
                   value={formData.universe_id}
@@ -137,7 +135,7 @@ export function NewProjectPage() {
                   onClick={() => setStep(2)}
                   disabled={!formData.title.trim()}
                 >
-                  下一步 →
+                  下一步 &rarr;
                 </Button>
               </div>
             </div>
@@ -149,8 +147,8 @@ export function NewProjectPage() {
           <Card
             title={
               <span className="inline-flex items-center gap-2">
-                <PaintBrushIcon className="w-5 h-5" aria-hidden="true" />
-                <span className="underline-sketch">选择风格</span>
+                <PaintBrushIcon className="w-5 h-5 text-primary" aria-hidden="true" />
+                <span className="underline-accent">选择风格</span>
               </span>
             }
           >
@@ -161,12 +159,12 @@ export function NewProjectPage() {
                 onCreateNew={() => setShowCreateStyle(true)}
               />
             </div>
-            <div className="mb-6 border-t border-base-300 pt-6">
+            <div className="mb-6 border-t border-base-300/30 pt-6">
               <div className="mb-4">
                 <h4 className="text-base font-semibold text-base-content">
                   Provider 选择
                 </h4>
-                <p className="mt-1 text-sm text-base-content/70">
+                <p className="mt-1 text-sm text-base-content/60">
                   为当前项目单独设置 text / image / video provider；不设置时继承系统默认。
                 </p>
               </div>
@@ -181,9 +179,9 @@ export function NewProjectPage() {
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(1)}>
-                ← 返回
+                &larr; 返回
               </Button>
-              <Button onClick={() => setStep(3)}>下一步 →</Button>
+              <Button onClick={() => setStep(3)}>下一步 &rarr;</Button>
             </div>
           </Card>
         )}
@@ -193,15 +191,15 @@ export function NewProjectPage() {
           <Card
             title={
               <span className="inline-flex items-center gap-2">
-                <CheckCircleIcon className="w-5 h-5" aria-hidden="true" />
-                <span className="underline-sketch">确认项目</span>
+                <CheckCircleIcon className="w-5 h-5 text-primary" aria-hidden="true" />
+                <span className="underline-accent">确认项目</span>
               </span>
             }
           >
             <div className="space-y-4">
-              <div className="bg-base-300 rounded-lg p-4">
+              <div className="bg-base-300/40 rounded-xl p-4 border border-base-300/30">
                 <h3 className="font-semibold text-lg">{formData.title}</h3>
-                <div className="badge badge-outline mt-2 flex items-center gap-2 text-base-content">
+                <div className="badge badge-outline mt-2 flex items-center gap-2 text-base-content border-base-300/50">
                   <PaintBrushIcon className="w-5 h-5" aria-hidden="true" />
                   {formData.style}
                 </div>
@@ -212,16 +210,16 @@ export function NewProjectPage() {
                   </div>
                 )}
                 {formData.story && (
-                  <p className="text-sm text-base-content/70 mt-3 line-clamp-4">
+                  <p className="text-sm text-base-content/60 mt-3 line-clamp-4">
                     {formData.story}
                   </p>
                 )}
               </div>
-              <div className="rounded-lg border border-base-300 bg-base-200/60 p-4">
+              <div className="rounded-xl border border-base-300/30 bg-base-200/40 p-4">
                 <h4 className="text-sm font-semibold text-base-content">
                   Provider 选择
                 </h4>
-                <dl className="mt-3 space-y-2 text-sm text-base-content/80">
+                <dl className="mt-3 space-y-2 text-sm text-base-content/70">
                   <div className="flex items-center justify-between gap-4">
                     <dt>文本</dt>
                     <dd>{formData.text_provider_override ?? "继承默认"}</dd>
@@ -238,7 +236,7 @@ export function NewProjectPage() {
               </div>
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => setStep(2)}>
-                  ← 返回
+                  &larr; 返回
                 </Button>
                 <Button
                   variant="primary"
@@ -259,7 +257,6 @@ export function NewProjectPage() {
         )}
       </main>
 
-      {/* Create Style Modal */}
       <CreateStyleModal
         isOpen={showCreateStyle}
         onClose={() => setShowCreateStyle(false)}

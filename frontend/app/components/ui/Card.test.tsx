@@ -23,7 +23,7 @@ describe('Card', () => {
     const { container } = render(<Card className="my-custom-class">Content</Card>);
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveClass('my-custom-class');
-    expect(card).toHaveClass('card-forge');
+    expect(card).toHaveClass('card-panel');
   });
 
   it('applies custom style', () => {
@@ -37,13 +37,13 @@ describe('Card', () => {
   it('applies variant styles', () => {
     const { container, rerender } = render(<Card variant="primary">Primary</Card>);
     let card = container.firstChild as HTMLElement;
-    expect(card).toHaveClass('bg-primary/10');
-    expect(card).toHaveClass('border-primary');
+    expect(card).toHaveClass('bg-primary/5');
+    expect(card).toHaveClass('border-primary/20');
 
     rerender(<Card variant="secondary">Secondary</Card>);
     card = container.firstChild as HTMLElement;
-    expect(card).toHaveClass('bg-secondary/10');
-    expect(card).toHaveClass('border-secondary');
+    expect(card).toHaveClass('bg-secondary/5');
+    expect(card).toHaveClass('border-secondary/20');
   });
 
   it('uses default variant when none is provided', () => {

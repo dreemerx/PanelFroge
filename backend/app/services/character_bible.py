@@ -54,7 +54,7 @@ async def compute_face_embedding(image_url: str) -> list[float] | None:
     """下载角色图片，调用 face_cropper.detect_faces() 提取 embedding。
 
     Args:
-        image_url: 角色图片 URL
+        image_url: 角色图片 URL（支持本地路径 /static/... 或远程 URL）
 
     Returns:
         512 维 embedding 向量列表，无法提取则返回 None
@@ -64,10 +64,23 @@ async def compute_face_embedding(image_url: str) -> list[float] | None:
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(image_url)
-            response.raise_for_status()
-            image_bytes = response.content
+        # 本地文件：直接从磁盘读取
+        if image_url.startswith("/static/"):
+            from app.services.file_cleaner import STATIC_DIR
+
+            relative_path = image_url.lstrip("/")
+            local_path = STATIC_DIR.parent / relative_path
+            if local_path.exists():
+                image_bytes = local_path.read_bytes()
+            else:
+                logger.warning("Local image file not found: %s", local_path)
+                return None
+        else:
+            # 远程 URL：通过 HTTP 下载
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(image_url)
+                response.raise_for_status()
+                image_bytes = response.content
     except Exception as e:
         logger.warning("Failed to download image for embedding: %s", e)
         return None

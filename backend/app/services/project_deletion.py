@@ -33,17 +33,63 @@ async def delete_project_files(session: AsyncSession, project: Project, project_
 
 async def delete_project_data(session: AsyncSession, project_id: int) -> None:
     """删除项目关联的所有数据库记录"""
-    # 删除 assets（source_project_id 引用 project.id）
+    from app.models.artifact import Artifact
+    from app.models.artifact_version import ArtifactVersion
     from app.models.asset import Asset
+    from app.models.consistency_report import ConsistencyReport
+    from app.models.run import Run
+    from app.models.stage import Stage
+    from app.models.universe import SharedCharacter, UniverseProjectLink
 
+    # 1. 删除 ArtifactVersion（依赖 agentrun, project）
+    av_project_id_col = cast(InstrumentedAttribute[int], cast(object, ArtifactVersion.project_id))
+    await session.execute(delete(ArtifactVersion).where(av_project_id_col == project_id))
+
+    # 2. 删除 Artifact（依赖 run, stage, project）
+    artifact_project_id_col = cast(InstrumentedAttribute[int], cast(object, Artifact.project_id))
+    await session.execute(delete(Artifact).where(artifact_project_id_col == project_id))
+
+    # 3. 删除 Stage（依赖 run, project）
+    stage_project_id_col = cast(InstrumentedAttribute[int], cast(object, Stage.project_id))
+    await session.execute(delete(Stage).where(stage_project_id_col == project_id))
+
+    # 4. 删除 ConsistencyReport（依赖 project, agentrun）
+    cr_project_id_col = cast(
+        InstrumentedAttribute[int], cast(object, ConsistencyReport.project_id)
+    )
+    await session.execute(delete(ConsistencyReport).where(cr_project_id_col == project_id))
+
+    # 5. 删除 Run（依赖 project）
+    run_project_id_col = cast(InstrumentedAttribute[int], cast(object, Run.project_id))
+    await session.execute(delete(Run).where(run_project_id_col == project_id))
+
+    # 6. 删除 UniverseProjectLink（依赖 project）
+    upl_project_id_col = cast(
+        InstrumentedAttribute[int], cast(object, UniverseProjectLink.project_id)
+    )
+    await session.execute(delete(UniverseProjectLink).where(upl_project_id_col == project_id))
+
+    # 7. 删除 SharedCharacter（source_project_id 可选引用 project）
+    sc_source_project_id_col = cast(
+        InstrumentedAttribute[int | None], cast(object, SharedCharacter.source_project_id)
+    )
+    await session.execute(
+        update(SharedCharacter)
+        .where(sc_source_project_id_col == project_id)
+        .values(source_project_id=None)
+    )
+
+    # 8. 删除 assets（source_project_id 引用 project.id）
     asset_source_project_id_col = cast(
         InstrumentedAttribute[int | None], cast(object, Asset.source_project_id)
     )
     await session.execute(delete(Asset).where(asset_source_project_id_col == project_id))
 
+    # 9. 删除 Message
     message_project_id_col = cast(InstrumentedAttribute[int], cast(object, Message.project_id))
     await session.execute(delete(Message).where(message_project_id_col == project_id))
 
+    # 10. 删除 AgentMessage 和 AgentRun
     agent_run_id_col = cast(InstrumentedAttribute[int | None], cast(object, AgentRun.id))
     agent_run_project_id_col = cast(InstrumentedAttribute[int], cast(object, AgentRun.project_id))
     agent_message_run_id_col = cast(
@@ -53,9 +99,11 @@ async def delete_project_data(session: AsyncSession, project_id: int) -> None:
     await session.execute(delete(AgentMessage).where(agent_message_run_id_col.in_(run_ids_subq)))
     await session.execute(delete(AgentRun).where(agent_run_project_id_col == project_id))
 
+    # 11. 删除 Shot
     shot_project_id_col = cast(InstrumentedAttribute[int], cast(object, Shot.project_id))
     await session.execute(delete(Shot).where(shot_project_id_col == project_id))
 
+    # 12. 删除 Character
     character_project_id_col = cast(InstrumentedAttribute[int], cast(object, Character.project_id))
     await session.execute(delete(Character).where(character_project_id_col == project_id))
 

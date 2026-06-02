@@ -47,31 +47,27 @@ export function ConfirmModal({
 
   return (
     <dialog className="modal modal-open" open>
-      <div className="modal-box bg-base-100 border-3 border-base-content/30 shadow-brutal">
+      <div className="modal-box bg-base-100 border border-base-300/40 rounded-2xl shadow-glass">
         <div className="flex items-start gap-4">
-          {/* 图标 */}
           <div className={`p-3 rounded-full ${styles.iconBg}`}>
             <ExclamationTriangleIcon className={`w-6 h-6 ${styles.icon}`} />
           </div>
-
-          {/* 内容 */}
           <div className="flex-1">
             <h3 className="font-heading font-bold text-lg">{title}</h3>
-            <p className="text-base-content/70 mt-2">{message}</p>
+            <p className="text-base-content/60 mt-2">{message}</p>
           </div>
         </div>
 
-        {/* 操作按钮 */}
         <div className="modal-action">
           <button
-            className="btn btn-ghost border-2 border-base-content/30 cursor-pointer"
+            className="btn btn-ghost border border-base-300/40 cursor-pointer"
             onClick={onClose}
             disabled={isLoading}
           >
             {cancelText}
           </button>
           <button
-            className={`btn ${styles.button} border-2 border-base-content/30 cursor-pointer`}
+            className={`btn ${styles.button} border border-base-300/40 cursor-pointer`}
             onClick={onConfirm}
             disabled={isLoading}
           >
@@ -81,7 +77,6 @@ export function ConfirmModal({
         </div>
       </div>
 
-      {/* 背景遮罩 */}
       <form method="dialog" className="modal-backdrop bg-neutral/50">
         <button type="button" onClick={onClose} disabled={isLoading}>
           close

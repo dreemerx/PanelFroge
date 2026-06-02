@@ -288,7 +288,7 @@ export function SettingsModal() {
 	const renderConfigItem = (item: ConfigItem) => (
 		<div
 			key={item.key}
-			className="bg-base-200 p-4 rounded-lg border-2 border-base-content/30"
+			className="bg-base-200 p-4 rounded-lg border border-base-300/40"
 		>
 			<div className="flex items-center gap-2 mb-2">
 				<span className="font-mono font-bold text-sm">
@@ -341,7 +341,7 @@ export function SettingsModal() {
 
 				{/* 服务提供商选择 */}
 				{providerItem && (
-					<div className="bg-base-200 p-4 rounded-lg border-2 border-base-content/30">
+					<div className="bg-base-200 p-4 rounded-lg border border-base-300/40">
 						<div className="flex items-center gap-2 mb-3">
 							<span className="font-mono font-bold text-sm">TEXT_PROVIDER</span>
 							<span className="badge badge-primary badge-xs">必选</span>
@@ -501,7 +501,7 @@ export function SettingsModal() {
 				</div>
 
 				{providerItem && (
-					<div className="bg-base-200 p-4 rounded-lg border-2 border-base-content/30">
+					<div className="bg-base-200 p-4 rounded-lg border border-base-300/40">
 						<div className="flex items-center gap-2 mb-3">
 							<span className="font-mono font-bold text-sm">IMAGE_PROVIDER</span>
 							<span className="badge badge-primary badge-xs">必选</span>
@@ -647,7 +647,7 @@ export function SettingsModal() {
 
 				{/* 服务提供商选择 */}
 				{providerItem && (
-					<div className="bg-base-200 p-4 rounded-lg border-2 border-base-content/30">
+					<div className="bg-base-200 p-4 rounded-lg border border-base-300/40">
 						<div className="flex items-center gap-2 mb-3">
 							<span className="font-mono font-bold text-sm">
 								VIDEO_PROVIDER
@@ -825,9 +825,9 @@ export function SettingsModal() {
 
 	return (
 		<div className="modal modal-open">
-			<div className="modal-box w-11/12 max-w-5xl max-h-[90vh] border-3 border-base-content/30 shadow-brutal-lg bg-base-100 p-0 flex flex-col">
+			<div className="modal-box w-11/12 max-w-5xl max-h-[90vh] border border-base-300/40 shadow-glass-lg bg-base-100 p-0 flex flex-col rounded-2xl">
 				{/* 头部 */}
-				<div className="flex items-center justify-between px-6 py-4 border-b-3 border-base-content/30 bg-base-200 shrink-0">
+				<div className="flex items-center justify-between px-6 py-4 border-b border-base-300/40 bg-base-200 shrink-0">
 					<h3 className="font-bold text-xl flex items-center gap-2">
 						<Cog6ToothIcon className="w-6 h-6 text-accent" />
 						环境变量配置管理
@@ -850,7 +850,7 @@ export function SettingsModal() {
 					<div className="p-6">
 						<div
 							role="alert"
-							className="alert alert-error border-2 border-base-content/30"
+							className="alert alert-error border border-base-300/40"
 						>
 							<ExclamationCircleIcon className="w-6 h-6" />
 							<span>加载配置失败，请检查后端服务是否正常运行。</span>
@@ -864,7 +864,7 @@ export function SettingsModal() {
 						className="flex flex-col flex-1 min-h-0"
 					>
 						{/* 标签页导航 */}
-						<div className="px-4 py-3 border-b-3 border-base-content/30 bg-base-100 shrink-0">
+						<div className="px-4 py-3 border-b border-base-300/40 bg-base-100 shrink-0">
 							<div role="tablist" className="flex flex-wrap gap-2">
 								{sections.map((section) => {
 									const cfg = tabConfig[section.key];
@@ -878,10 +878,10 @@ export function SettingsModal() {
 											onClick={() => handleTabChange(section.key)}
 											className={`
                         flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                        border-2 border-base-content/30 transition-all
+                        border border-base-300/40 transition-all
                         ${
 													isActive
-														? "bg-accent text-accent-content shadow-brutal"
+														? "bg-accent text-accent-content shadow-glow-sm"
 														: "bg-base-200 hover:bg-base-300"
 												}
                       `}
@@ -914,7 +914,7 @@ export function SettingsModal() {
 						</div>
 
 						{/* 底部操作栏 */}
-						<div className="border-t-3 border-base-content/30 bg-base-200 px-6 py-4 flex items-center gap-4 shrink-0">
+						<div className="border-t border-base-300/40 bg-base-200 px-6 py-4 flex items-center gap-4 shrink-0">
 							<div className="flex items-center gap-2 text-info text-sm flex-1">
 								<InformationCircleIcon className="w-5 h-5 shrink-0" />
 								<span>大部分配置保存后立即生效，数据库/Redis 配置需重启</span>
@@ -923,14 +923,14 @@ export function SettingsModal() {
 							<button
 								type="button"
 								onClick={handleCancel}
-								className="btn border-2 border-base-content/30"
+								className="btn border border-base-300/40"
 							>
 								取消
 							</button>
 
 							<button
 								type="submit"
-								className="btn btn-primary border-2 border-base-content/30"
+								className="btn btn-primary border border-base-300/40"
 								disabled={updateMutation.isPending}
 							>
 								{updateMutation.isPending && (
@@ -940,7 +940,7 @@ export function SettingsModal() {
 							</button>
 							<button
 								type="button"
-								className="btn btn-outline border-2 border-base-content/30"
+								className="btn btn-outline border border-base-300/40"
 								onClick={handleTestConnection}
 								disabled={
 									updateMutation.isPending ||
@@ -961,7 +961,7 @@ export function SettingsModal() {
 			{/* Alert Modal */}
 			{alertState.show && (
 				<div className="modal modal-open">
-					<div className="modal-box border-3 border-base-content/30 shadow-brutal-lg">
+					<div className="modal-box border border-base-300/40 shadow-glass-lg rounded-2xl">
 						<div className="flex items-start gap-3">
 							{/* Icon */}
 							<div
@@ -985,7 +985,7 @@ export function SettingsModal() {
 								<h3 className="font-bold text-lg mb-2">{alertState.title}</h3>
 								<p className="text-base-content/80">{alertState.message}</p>
 								{alertState.details && (
-									<div className="mt-3 p-3 bg-base-200 rounded-lg border-2 border-base-content/30">
+									<div className="mt-3 p-3 bg-base-200 rounded-lg border border-base-300/40">
 										<p className="text-sm whitespace-pre-line">
 											{alertState.details}
 										</p>
@@ -1001,7 +1001,7 @@ export function SettingsModal() {
 									setAlertState({ ...alertState, show: false });
 									closeModal(); // 关闭设置模态框
 								}}
-								className="btn btn-primary border-2 border-base-content/30"
+								className="btn btn-primary border border-base-300/40"
 							>
 								确定
 							</button>

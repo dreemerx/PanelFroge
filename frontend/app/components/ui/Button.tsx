@@ -19,14 +19,14 @@ export function Button({
   type = "button",
   ...props
 }: ButtonProps) {
-  const baseStyles = "btn-forge font-heading cursor-pointer";
+  const baseStyles = "btn-panel font-heading cursor-pointer";
 
   const variantStyles = {
-    primary: "bg-primary/15 text-primary border-primary/30 hover:bg-primary/25",
-    secondary: "bg-secondary/15 text-secondary border-secondary/30 hover:bg-secondary/25",
-    accent: "bg-accent/15 text-accent border-accent/30 hover:bg-accent/25",
+    primary: "bg-primary/12 text-primary border-primary/25 hover:bg-primary/20 hover:border-primary/40",
+    secondary: "bg-secondary/12 text-secondary border-secondary/25 hover:bg-secondary/20 hover:border-secondary/40",
+    accent: "bg-accent/12 text-accent border-accent/25 hover:bg-accent/20 hover:border-accent/40",
     ghost: "bg-transparent border-transparent shadow-none hover:bg-base-200/50",
-    error: "bg-error/15 text-error border-error/30 hover:bg-error/25",
+    error: "bg-error/12 text-error border-error/25 hover:bg-error/20 hover:border-error/40",
   };
 
   const sizeStyles = {
@@ -48,7 +48,7 @@ export function Button({
         baseStyles,
         variantStyles[variant],
         sizeStyles[size],
-        "touch-target", // 确保触摸目标尺寸
+        "touch-target",
         loading && "loading",
         isDisabled && "opacity-50 cursor-not-allowed",
         className

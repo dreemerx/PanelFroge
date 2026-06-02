@@ -49,7 +49,7 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 			<button
 				type="button"
 				onClick={() => setOpen(!open)}
-				className="flex items-center gap-1 text-xs font-heading font-bold max-w-[180px] hover:text-primary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+				className="flex items-center gap-1.5 text-xs font-medium max-w-[180px] hover:text-primary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 				aria-expanded={open}
 				aria-haspopup="true"
 			>
@@ -59,7 +59,7 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 			</button>
 
 			{open && (
-				<div className="absolute left-0 top-full mt-1 w-64 bg-base-200 border border-base-300 rounded-lg shadow-forge z-50 py-1 max-h-80 overflow-y-auto backdrop-blur-sm">
+				<div className="absolute left-0 top-full mt-1 w-64 bg-base-200 border border-base-300/60 rounded-xl shadow-glass z-50 py-1 max-h-80 overflow-y-auto backdrop-blur-xl">
 					<Link
 						to="/"
 						onClick={() => setOpen(false)}
@@ -68,7 +68,7 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 						<SparklesIcon className="w-3 h-3" />
 						首页 — 所有项目
 					</Link>
-					<div className="border-t border-base-300/50 my-1" />
+					<div className="border-t border-base-300/30 my-1" />
 					{list.map((p) => {
 						const statusMap: Record<string, { label: string; cls: string }> = {
 							draft: { label: "草稿", cls: "text-base-content/25" },
@@ -82,14 +82,14 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 								key={p.id}
 								to={`/projects/${p.id}`}
 								onClick={() => setOpen(false)}
-								className={`flex items-center justify-between px-3 py-1.5 text-xs hover:bg-base-300/50 transition-colors group ${p.id === currentId ? "bg-primary/8 text-primary font-bold" : ""}`}
+								className={`flex items-center justify-between px-3 py-1.5 text-xs hover:bg-base-300/50 transition-colors group ${p.id === currentId ? "bg-primary/8 text-primary font-semibold" : ""}`}
 							>
 								<span className="truncate flex-1">{p.title}</span>
 								<span className={`text-[10px] ml-1.5 flex-shrink-0 ${st.cls}`}>{st.label}</span>
 							</Link>
 						);
 					})}
-					<div className="border-t border-base-300/50 my-1" />
+					<div className="border-t border-base-300/30 my-1" />
 					<Link
 						to="/"
 						onClick={() => setOpen(false)}
@@ -104,6 +104,22 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 	);
 }
 
+function PanelForgeLogo() {
+	return (
+		<svg width="22" height="22" viewBox="0 0 32 32" className="flex-shrink-0" aria-hidden="true">
+			<defs>
+				<linearGradient id="pf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+					<stop offset="0%" stopColor="#8B5CF6" />
+					<stop offset="100%" stopColor="#06B6D4" />
+				</linearGradient>
+			</defs>
+			<rect width="32" height="32" rx="7" fill="url(#pf-grad)" />
+			<path d="M9 8h5v3.5h-1.5v8H9V8zm9 0h5v3.5h-1.5v8H18V8z" fill="#0B0A12" opacity="0.85" />
+			<rect x="8" y="22" width="16" height="2" rx="1" fill="#0B0A12" opacity="0.5" />
+		</svg>
+	);
+}
+
 export function TopBar({
 	onToggleAssets,
 	onToggleHistory,
@@ -112,31 +128,21 @@ export function TopBar({
 	projectId,
 }: TopBarProps) {
 	const { theme, toggleTheme } = useThemeStore();
-	const isDark = theme.endsWith("dark");
+	const isDark = !theme.endsWith("light");
 	const { openModal: openSettingsModal } = useSettingsStore();
 
 	const btnCls = "flex items-center whitespace-nowrap !px-1.5 !min-h-0 !h-6 gap-1";
 	const iconCls = "w-3.5 h-3.5";
 
 	return (
-		<header className="flex-shrink-0 flex items-center h-10 px-3 bg-base-200/80 border-b border-base-300/60 z-30 gap-3 backdrop-blur-sm">
+		<header className="flex-shrink-0 flex items-center h-10 px-3 glass border-b border-base-300/30 z-30 gap-3">
 			<div className="flex items-center gap-2">
 				{projectId ? (
 					<ProjectDropdown currentId={projectId} />
 				) : (
-					<Link to="/" className="flex items-center gap-1.5 font-comic text-lg text-primary font-bold tracking-wider">
-						<svg width="20" height="20" viewBox="0 0 32 32" className="flex-shrink-0" aria-hidden="true">
-							<defs>
-								<linearGradient id="forge-nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" stopColor="#E8A830" />
-									<stop offset="100%" stopColor="#D07840" />
-								</linearGradient>
-							</defs>
-							<rect width="32" height="32" rx="6" fill="url(#forge-nav-grad)" />
-							<path d="M8 8h6v4h-2v10h-4V8zm10 0h6v4h-2v10h-4V8z" fill="#1a1208" opacity="0.9" />
-							<path d="M7 24h18v2H7z" fill="#1a1208" opacity="0.6" />
-						</svg>
-						PanelForge
+					<Link to="/" className="flex items-center gap-2 font-display text-base font-bold tracking-tight">
+						<PanelForgeLogo />
+						<span className="gradient-text">PanelForge</span>
 					</Link>
 				)}
 			</div>

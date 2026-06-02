@@ -1,14 +1,14 @@
 /**
  * Design Tokens
- * PanelForge - Forge-themed design system
+ * PanelForge - Modern Cinematic Design System
  */
 
 @layer base {
   :root {
-    /* Forge Accent Colors */
-    --forge-ember: 0.65 0.18 45;
-    --forge-copper: 0.55 0.15 55;
-    --forge-bronze: 0.50 0.12 65;
+    /* Accent Colors (oklch components) */
+    --accent-violet: 0.62 0.24 290;
+    --accent-cyan: 0.72 0.18 195;
+    --accent-amber: 0.75 0.18 80;
 
     /* Spacing Scale */
     --space-xs: 0.25rem;
@@ -20,8 +20,7 @@
 
     /* Border Widths */
     --border-thin: 1px;
-    --border-medium: 2px;
-    --border-thick: 3px;
+    --border-medium: 1.5px;
 
     /* Touch Targets */
     --touch-target-min: 44px;
@@ -39,12 +38,16 @@
     --z-modal: 50;
     --z-popover: 60;
     --z-tooltip: 70;
+
+    /* Glass Effect */
+    --glass-bg: oklch(var(--b2) / 0.6);
+    --glass-border: oklch(var(--bc) / 0.08);
+    --glass-blur: 16px;
   }
 
-  [data-theme="doodle-dark"] {
-    --forge-ember: 0.7 0.2 40;
-    --forge-copper: 0.6 0.18 50;
-    --forge-bronze: 0.55 0.14 60;
+  [data-theme="panel-light"] {
+    --glass-bg: oklch(var(--b2) / 0.7);
+    --glass-border: oklch(var(--bc) / 0.1);
   }
 }
 
@@ -54,15 +57,31 @@
     min-height: var(--touch-target-min);
   }
 
-  .brutal-hover {
-    @apply transition-all duration-200;
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
   }
 
-  .brutal-hover:hover {
-    @apply shadow-brutal-lg -translate-x-0.5 -translate-y-0.5;
+  .glass-subtle {
+    background: oklch(var(--b2) / 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(var(--bc) / 0.06);
   }
 
-  .brutal-hover:active {
-    @apply shadow-brutal translate-x-0 translate-y-0;
+  .gradient-text {
+    background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--s)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-warm {
+    background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--a)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

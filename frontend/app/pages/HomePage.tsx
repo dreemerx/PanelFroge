@@ -205,42 +205,42 @@ export function HomePage() {
 				onClose={() => setHistoryOpen(false)}
 				onNavigate={(id) => navigate(`/project/${id}`)}
 			/>
-			<div className="flex flex-col items-center justify-center p-4 sm:p-6 forge-bg-hero min-h-[calc(100vh-40px)]">
+			<div className="flex flex-col items-center justify-center p-4 sm:p-6 panel-bg-hero min-h-[calc(100vh-40px)]">
 				<main className="w-full max-w-2xl mx-auto">
 					<div className="text-center mb-10 animate-doodle-pop">
-						<div className="inline-block mb-4">
+						<div className="inline-block mb-5">
 							<svg width="56" height="56" viewBox="0 0 32 32" className="mx-auto" aria-hidden="true">
 								<defs>
-									<linearGradient id="forge-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-										<stop offset="0%" stopColor="#E8A830" />
-										<stop offset="100%" stopColor="#D07840" />
+									<linearGradient id="pf-hero-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+										<stop offset="0%" stopColor="#8B5CF6" />
+										<stop offset="100%" stopColor="#06B6D4" />
 									</linearGradient>
 								</defs>
-								<rect width="32" height="32" rx="6" fill="url(#forge-icon-grad)" />
-								<path d="M8 8h6v4h-2v10h-4V8zm10 0h6v4h-2v10h-4V8z" fill="#1a1208" opacity="0.9" />
-								<path d="M7 24h18v2H7z" fill="#1a1208" opacity="0.6" />
+								<rect width="32" height="32" rx="7" fill="url(#pf-hero-grad)" />
+								<path d="M9 8h5v3.5h-1.5v8H9V8zm9 0h5v3.5h-1.5v8H18V8z" fill="#0B0A12" opacity="0.85" />
+								<rect x="8" y="22" width="16" height="2" rx="1" fill="#0B0A12" opacity="0.5" />
 							</svg>
 						</div>
-						<h1 className="text-5xl sm:text-7xl font-comic tracking-wider forge-title leading-none forge-glow">
+						<h1 className="text-5xl sm:text-7xl font-display font-extrabold tracking-tight panel-title leading-none panel-glow">
 							PanelForge
 						</h1>
 						<p className="font-heading text-sm text-base-content/40 mt-4 tracking-wide font-medium">
-							锻造你的漫剧世界
+							AI 漫剧生成平台
 						</p>
-						<div className="forge-divider mt-4 mx-auto max-w-40" />
-						<p className="font-sketch text-xs text-base-content/25 mt-4">
+						<div className="panel-divider mt-4 mx-auto max-w-40" />
+						<p className="text-xs text-base-content/30 mt-4">
 							输入故事 &rarr; AI 生成角色与分镜 &rarr; 一键合成漫剧视频
 						</p>
 						<Link
 							to="/universes"
-							className="inline-flex items-center gap-1 mt-3 text-xs text-primary/50 hover:text-primary transition-colors font-heading font-bold"
+							className="inline-flex items-center gap-1 mt-3 text-xs text-primary/50 hover:text-primary transition-colors font-medium"
 						>
 							<GlobeAltIcon className="w-3.5 h-3.5" aria-hidden="true" />
 							IP 宇宙
 						</Link>
 					</div>
 
-					<Card className="w-full card-forge animate-draw-in">
+					<Card className="w-full card-panel animate-draw-in">
 						<div className="space-y-4">
 							{/* Story Input + Reference Images */}
 							<div className="relative" onPaste={handlePaste}>
@@ -249,7 +249,7 @@ export function HomePage() {
 								</label>
 								<textarea
 									id="story-input"
-									className="input-forge w-full min-h-28 text-sm resize-none p-3 pr-12"
+									className="input-panel w-full min-h-28 text-sm resize-none p-3 pr-12"
 									placeholder="写下你的故事创意…"
 									value={story}
 									onChange={(e) => setStory(e.target.value)}
@@ -269,7 +269,7 @@ export function HomePage() {
 								<Button
 									variant="primary"
 									size="sm"
-									className="absolute right-2 bottom-2 rounded-full !p-2 min-w-[40px] min-h-[40px] transition-all duration-150 hover:scale-110 active:scale-90 shadow-forge border border-primary/30"
+									className="absolute right-2 bottom-2 rounded-full !p-2 min-w-[40px] min-h-[40px] transition-all duration-150 hover:scale-110 active:scale-90 shadow-glow border border-primary/30"
 									onClick={handleSubmit}
 									disabled={!story.trim() || createMutation.isPending}
 									loading={createMutation.isPending}
@@ -287,7 +287,7 @@ export function HomePage() {
 									{referenceImages.map((img, i) => (
 										<div
 											key={i}
-											className="relative group w-12 h-12 rounded-lg overflow-hidden border border-base-300"
+											className="relative group w-12 h-12 rounded-lg overflow-hidden border border-base-300/50"
 										>
 											<img
 												src={img}
@@ -307,7 +307,7 @@ export function HomePage() {
 									{referenceImages.length < 7 && (
 										<button
 											type="button"
-											className="w-12 h-12 rounded-lg border border-dashed border-base-300 flex items-center justify-center text-base-content/20 hover:border-primary/30 hover:text-primary/40 transition-colors"
+											className="w-12 h-12 rounded-lg border border-dashed border-base-300/50 flex items-center justify-center text-base-content/20 hover:border-primary/30 hover:text-primary/40 transition-colors"
 											onClick={() => fileInputRef.current?.click()}
 											aria-label="添加参考图"
 										>
@@ -349,7 +349,7 @@ export function HomePage() {
 										key={category.group}
 										className="flex items-center gap-1.5 flex-wrap"
 									>
-										<span className="text-[10px] text-base-content/25 font-bold uppercase tracking-wider w-14 flex-shrink-0">
+										<span className="text-[10px] text-base-content/25 font-semibold uppercase tracking-wider w-14 flex-shrink-0">
 											{category.group}
 										</span>
 										<div className="flex gap-1 flex-wrap items-center">
@@ -357,10 +357,10 @@ export function HomePage() {
 												<button
 													key={opt.value}
 													type="button"
-													className={`px-2.5 py-0.5 rounded-md border text-[11px] font-bold transition-all duration-150 ${
+													className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all duration-150 ${
 														style === opt.value
-															? "border-primary/40 bg-primary/10 text-primary shadow-forge"
-															: "border-base-300 bg-base-200/40 text-base-content/40 hover:border-primary/20 hover:text-base-content/60"
+															? "border border-primary/40 bg-primary/10 text-primary shadow-glow-sm"
+															: "border border-base-300/40 bg-base-200/30 text-base-content/40 hover:border-primary/20 hover:text-base-content/60"
 													}`}
 													onClick={() => setStyle(opt.value)}
 												>
@@ -369,7 +369,7 @@ export function HomePage() {
 											))}
 										</div>
 										{ci < STYLE_CATEGORIES.length - 1 && (
-											<div className="hidden sm:block flex-1 border-b border-base-300/50" />
+											<div className="hidden sm:block flex-1 border-b border-base-300/30" />
 										)}
 									</div>
 								))}
@@ -391,11 +391,11 @@ export function HomePage() {
 							</div>
 
 							{showAdvanced && (
-								<div className="space-y-2 border-t border-base-300/50 pt-3">
+								<div className="space-y-2 border-t border-base-300/30 pt-3">
 									<div>
 										<label
 											htmlFor="shot-count"
-											className="text-xs text-base-content/30 mb-1 block font-heading font-bold uppercase tracking-wide"
+											className="text-xs text-base-content/30 mb-1 block font-semibold uppercase tracking-wide"
 										>
 											镜头数 {shotCount ?? "自动"}
 										</label>
@@ -411,14 +411,14 @@ export function HomePage() {
 									</div>
 
 									<div>
-										<label className="text-xs text-base-content/30 mb-1 block font-heading font-bold uppercase tracking-wide">
+										<label className="text-xs text-base-content/30 mb-1 block font-semibold uppercase tracking-wide">
 											角色提示
 										</label>
 										{characterHints.map((hint, i) => (
 											<div key={i} className="flex gap-1 mb-1">
 												<input
 													type="text"
-													className="input-forge input-sm flex-1 text-xs"
+													className="input-panel input-sm flex-1 text-xs px-3"
 													placeholder={`角色 ${i + 1}`}
 													value={hint}
 													onChange={(e) =>

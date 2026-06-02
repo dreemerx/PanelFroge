@@ -11,10 +11,10 @@ describe('Button', () => {
 
   it('applies variant styles', () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-primary');
+    expect(screen.getByRole('button')).toHaveClass('bg-primary/12');
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-secondary');
+    expect(screen.getByRole('button')).toHaveClass('bg-secondary/12');
   });
 
   it('applies size styles', () => {

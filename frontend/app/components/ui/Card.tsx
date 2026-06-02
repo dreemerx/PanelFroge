@@ -12,17 +12,17 @@ interface CardProps {
 export function Card({ title, children, className, style, variant = "default" }: CardProps) {
   const variantStyles = {
     default: "bg-base-100",
-    primary: "bg-primary/10 border-primary",
-    secondary: "bg-secondary/10 border-secondary",
-    accent: "bg-accent/10 border-accent",
+    primary: "bg-primary/5 border-primary/20",
+    secondary: "bg-secondary/5 border-secondary/20",
+    accent: "bg-accent/5 border-accent/20",
   };
 
   return (
-    <div className={clsx("card-forge p-6", variantStyles[variant], className)} style={style}>
+    <div className={clsx("card-panel p-6", variantStyles[variant], className)} style={style}>
       {title && (
         <h3 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
           {typeof title === "string" ? (
-            <span className="underline-sketch">{title}</span>
+            <span className="underline-accent">{title}</span>
           ) : (
             title
           )}

@@ -20,7 +20,7 @@ export function Input({ label, error, className, ...props }: InputProps) {
       <input
         id={id}
         className={clsx(
-          "input-forge w-full px-4 py-3 text-base",
+          "input-panel w-full px-4 py-3 text-base",
           error && "border-error",
           className
         )}

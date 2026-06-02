@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type Theme = "doodle" | "doodle-dark";
+type Theme = "panel" | "panel-light";
 
 interface ThemeState {
   theme: Theme;
@@ -12,9 +12,9 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: "doodle",
+      theme: "panel",
       toggleTheme: () => {
-        const newTheme = get().theme === "doodle" ? "doodle-dark" : "doodle";
+        const newTheme = get().theme === "panel" ? "panel-light" : "panel";
         document.documentElement.setAttribute("data-theme", newTheme);
         set({ theme: newTheme });
       },
@@ -26,7 +26,6 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: "panelforge-theme",
       onRehydrateStorage: () => (state) => {
-        // 恢复主题时应用到 DOM
         if (state?.theme) {
           document.documentElement.setAttribute("data-theme", state.theme);
         }

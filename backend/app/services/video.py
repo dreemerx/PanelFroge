@@ -78,7 +78,7 @@ class VideoService:
             return sanitized if sanitized else None
 
         # Direct URL field
-        for key in ("video_url", "url", "output_url", "result_url"):
+        for key in ("video_url", "url", "output_url", "result_url", "remixed_from_video_id"):
             result = _try_sanitize(data.get(key))
             if result:
                 return result
@@ -315,6 +315,15 @@ class VideoService:
                     "aspect_ratio": "16:9",
                     **kwargs,
                 }
+            elif "agnes" in model_lower:
+                # agnes-video 使用 seconds 和 size 参数
+                payload: dict[str, Any] = {
+                    "model": self.settings.video_model,
+                    "prompt": prompt,
+                    "seconds": str(float(duration)),
+                    "size": "1280x768",
+                    **kwargs,
+                }
             else:
                 payload = {
                     "model": self.settings.video_model,
@@ -371,13 +380,24 @@ class VideoService:
                     return extracted
                 raise RuntimeError(f"Video API stream response missing URL: {content}")
             else:
-                # 标准视频生成接口（图生视频）
-                payload: dict[str, Any] = {
-                    "model": self.settings.video_model,
-                    "prompt": prompt,
-                    "image": image_base64,
-                    **kwargs,
-                }
+                model_lower = self.settings.video_model.lower()
+                if "agnes" in model_lower:
+                    # Agnes 图生视频：使用纯 base64（不带 data URL 前缀）
+                    payload: dict[str, Any] = {
+                        "model": self.settings.video_model,
+                        "prompt": prompt,
+                        "image": image_base64,
+                        "seconds": "5.0",
+                        **kwargs,
+                    }
+                else:
+                    # 标准视频生成接口（图生视频）
+                    payload: dict[str, Any] = {
+                        "model": self.settings.video_model,
+                        "prompt": prompt,
+                        "image": image_base64,
+                        **kwargs,
+                    }
                 data = await self._post_json_with_retry(url, payload)
 
                 # 异步任务：提交后需轮询

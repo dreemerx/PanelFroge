@@ -8,27 +8,27 @@ vi.mock("zustand/middleware", () => ({
 const { useThemeStore } = await import("./themeStore");
 
 describe("themeStore", () => {
-  it("defaults to doodle theme", () => {
-    expect(useThemeStore.getState().theme).toBe("doodle");
+  it("defaults to panel theme", () => {
+    expect(useThemeStore.getState().theme).toBe("panel");
   });
 
-  it("toggleTheme switches to doodle-dark", () => {
-    useThemeStore.getState().setTheme("doodle");
+  it("toggleTheme switches to panel-light", () => {
+    useThemeStore.getState().setTheme("panel");
     useThemeStore.getState().toggleTheme();
-    expect(useThemeStore.getState().theme).toBe("doodle-dark");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("doodle-dark");
+    expect(useThemeStore.getState().theme).toBe("panel-light");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("panel-light");
   });
 
-  it("toggleTheme toggles back to doodle", () => {
-    useThemeStore.getState().setTheme("doodle-dark");
+  it("toggleTheme toggles back to panel", () => {
+    useThemeStore.getState().setTheme("panel-light");
     useThemeStore.getState().toggleTheme();
-    expect(useThemeStore.getState().theme).toBe("doodle");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("doodle");
+    expect(useThemeStore.getState().theme).toBe("panel");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("panel");
   });
 
   it("setTheme sets specific theme", () => {
-    useThemeStore.getState().setTheme("doodle-dark");
-    expect(useThemeStore.getState().theme).toBe("doodle-dark");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("doodle-dark");
+    useThemeStore.getState().setTheme("panel-light");
+    expect(useThemeStore.getState().theme).toBe("panel-light");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("panel-light");
   });
 });

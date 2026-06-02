@@ -327,6 +327,10 @@ class ImageService:
 
         raise RuntimeError(f"Image generation stream failed after retries: {last_exc}") from last_exc
 
+    def _is_agnes_api(self) -> bool:
+        """检测是否是 Agnes API"""
+        return "agnes" in self.settings.image_base_url.lower()
+
     async def generate(
         self,
         *,
@@ -353,9 +357,11 @@ class ImageService:
                 "prompt": prompt,
                 "size": size,
                 "n": n,
-                "response_format": response_format,
                 **kwargs,
             }
+            # Agnes API 不支持 response_format 参数
+            if not self._is_agnes_api():
+                payload["response_format"] = response_format
             if style:
                 payload["style"] = style
 
@@ -416,10 +422,12 @@ class ImageService:
                         "prompt": prompt,
                         "size": size,
                         "n": 1,
-                        "response_format": "url",
                         "image": image_base64,
                         **kwargs,
                     }
+                    # Agnes API 不支持 response_format 参数
+                    if not self._is_agnes_api():
+                        payload["response_format"] = "url"
                     data = await self._post_json_with_retry(url, payload)
                     items = data.get("data") or []
                     if isinstance(items, list) and items:
@@ -454,7 +462,7 @@ class ImageService:
             raise RuntimeError(f"Image API stream response missing URL: {content}")
 
         # DALL-E 风格（非流式）
-        data = await self.generate(prompt=prompt, size=size, response_format="url", **kwargs)
+        data = await self.generate(prompt=prompt, size=size, **kwargs)
         items = data.get("data") or []
         if isinstance(items, list) and items:
             first = items[0] if isinstance(items[0], dict) else {}

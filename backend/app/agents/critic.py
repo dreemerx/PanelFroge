@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import re
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
@@ -11,6 +13,7 @@ from app.agents.base import AgentContext, BaseAgent
 from app.agents.prompts.critic import CHARACTER_REVIEW_SYSTEM_PROMPT, SHOT_REVIEW_SYSTEM_PROMPT
 from app.config import Settings
 from app.models.project import Character, Shot
+from app.services.file_cleaner import STATIC_DIR
 from app.services.text_factory import create_text_service
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,7 @@ class CriticAgent(BaseAgent):
         """Build a multimodal user message for VLM review.
 
         If the image URL can be resolved to a public URL, send as image_url content block.
+        If it's a local file, read and send as base64 data URL.
         Otherwise, fall back to text-only review.
         """
         content_parts: list[dict[str, Any]] = [
@@ -39,25 +43,56 @@ class CriticAgent(BaseAgent):
         ]
 
         if image_url:
-            # Resolve local paths to public URLs if configured
-            resolved_url = settings.build_public_url(image_url)
-            if resolved_url and (
-                resolved_url.startswith("http://") or resolved_url.startswith("https://")
-            ):
-                content_parts.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": resolved_url},
-                    }
-                )
+            # Try to read local file as base64 first
+            if image_url.startswith("/static/"):
+                relative_path = image_url.lstrip("/")
+                local_path = STATIC_DIR.parent / relative_path
+                if local_path.exists():
+                    try:
+                        image_bytes = local_path.read_bytes()
+                        b64 = base64.b64encode(image_bytes).decode("utf-8")
+                        suffix = local_path.suffix.lower()
+                        mime = {
+                            ".png": "image/png",
+                            ".jpg": "image/jpeg",
+                            ".jpeg": "image/jpeg",
+                            ".webp": "image/webp",
+                            ".gif": "image/gif",
+                        }.get(suffix, "image/png")
+                        content_parts.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:{mime};base64,{b64}"},
+                            }
+                        )
+                    except Exception as exc:
+                        logger.warning("CriticAgent: failed to read local image %s: %s", local_path, exc)
+                        content_parts.append(
+                            {"type": "text", "text": f"[图片读取失败: {image_url}]"}
+                        )
+                else:
+                    content_parts.append(
+                        {"type": "text", "text": f"[图片文件不存在: {image_url}]"}
+                    )
             else:
-                # No public URL available — graceful degradation
-                content_parts.append(
-                    {
-                        "type": "text",
-                        "text": f"[图片无法附加，原始路径: {image_url}]",
-                    }
-                )
+                # Remote URL or public URL
+                resolved_url = settings.build_public_url(image_url)
+                if resolved_url and (
+                    resolved_url.startswith("http://") or resolved_url.startswith("https://")
+                ):
+                    content_parts.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": resolved_url},
+                        }
+                    )
+                else:
+                    content_parts.append(
+                        {
+                            "type": "text",
+                            "text": f"[图片无法附加，原始路径: {image_url}]",
+                        }
+                    )
 
         return [{"role": "user", "content": content_parts}]
 

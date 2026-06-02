@@ -480,7 +480,7 @@ class PlanAgent(BaseAgent):
 
         user_prompt = json.dumps(payload, ensure_ascii=False)
         resp = await self.call_llm(
-            ctx, system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt, max_tokens=4096
+            ctx, system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt, max_tokens=8192
         )
         data = extract_json(resp.text)
 

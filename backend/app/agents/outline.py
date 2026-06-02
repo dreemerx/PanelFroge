@@ -66,7 +66,7 @@ class OutlineAgent(BaseAgent):
             ctx,
             system_prompt=SYSTEM_PROMPT,
             user_prompt=json.dumps(payload, ensure_ascii=False),
-            max_tokens=2048,
+            max_tokens=8192,
         )
         data = extract_json(resp.text)
         outline = _clean_outline(data)

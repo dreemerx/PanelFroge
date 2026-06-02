@@ -136,7 +136,7 @@ async def get_redis() -> redis.Redis:
         from app.config import get_settings
 
         settings = get_settings()
-        _redis_client = redis.from_url(settings.redis_url)
+        _redis_client = redis.from_url(settings.redis_url, protocol=2)
     return _redis_client
 
 

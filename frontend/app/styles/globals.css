@@ -6,7 +6,8 @@
 
 @layer base {
   body {
-    @apply bg-base-100 text-base-content min-h-screen font-sans;
+    @apply bg-base-100 text-base-content min-h-screen font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -21,31 +22,38 @@
   :focus-visible {
     outline: 2px solid oklch(var(--p));
     outline-offset: 2px;
+    border-radius: 4px;
   }
 
   :focus:not(:focus-visible) {
     outline: none;
   }
 
-  [data-theme], .btn, .card-forge, .card-comic, .btn-forge, .btn-comic, .input-forge, a, nav, header, aside {
-    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-    transition-duration: 200ms;
-    transition-timing-function: ease-in-out;
-  }
-
-  * {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 200ms;
-    transition-timing-function: ease-in-out;
-  }
-
-  *[class*="animate-"],
-  *[class*="transition-"] {
-    transition-property: none;
-  }
-
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+    @apply font-heading tracking-tight;
+  }
+
+  ::selection {
+    background: oklch(var(--p) / 0.25);
+    color: oklch(var(--pc));
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(var(--bc) / 0.15);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--bc) / 0.25);
   }
 
   .sr-only {
@@ -59,157 +67,158 @@
     white-space: nowrap;
     border-width: 0;
   }
-
-  .sr-only:focus,
-  .focus\:not-sr-only:focus {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: inherit;
-    margin: inherit;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-  }
 }
 
-/* ========== Forge Component Styles ========== */
+/* ========== Component Styles ========== */
 
 @layer components {
-  /* Forge Card - subtle border with warm glow */
-  .card-forge {
-    @apply bg-base-200/80 border border-base-300 rounded-xl transition-all duration-200 backdrop-blur-sm;
-    box-shadow: 0 2px 8px oklch(var(--b1) / 0.5), inset 0 1px 0 oklch(var(--bc) / 0.03);
+  /* Glass Card */
+  .card-panel {
+    @apply bg-base-200/60 border border-base-300/50 rounded-xl;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 oklch(var(--bc) / 0.04);
+    transition: all 0.2s ease;
   }
-  .card-forge:hover {
+  .card-panel:hover {
     @apply border-primary/20;
-    box-shadow: 0 4px 16px oklch(var(--p) / 0.08), inset 0 1px 0 oklch(var(--bc) / 0.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 0 1px oklch(var(--p) / 0.08), inset 0 1px 0 oklch(var(--bc) / 0.06);
   }
 
-  /* Comic Card - keep for canvas shapes */
-  .card-comic {
-    @apply bg-base-200/90 border border-base-300 rounded-lg transition-all duration-150;
-    box-shadow: 0 0 8px oklch(var(--p) / 0.06), inset 0 1px 0 oklch(var(--bc) / 0.03);
-  }
-  .card-comic:hover {
-    @apply border-primary/15;
-    box-shadow: 0 0 16px oklch(var(--p) / 0.1), inset 0 1px 0 oklch(var(--bc) / 0.05);
-  }
+  /* Legacy aliases */
+  .card-forge { @apply card-panel; }
+  .card-comic { @apply card-panel; }
 
-  /* Forge Button */
-  .btn-forge {
-    @apply border border-primary/30 rounded-lg font-bold uppercase tracking-wide transition-all duration-150 flex items-center whitespace-nowrap gap-1 bg-primary/10 text-primary;
+  /* Panel Button */
+  .btn-panel {
+    @apply rounded-lg font-semibold tracking-wide transition-all duration-200 flex items-center whitespace-nowrap gap-1.5;
+    border: 1px solid oklch(var(--p) / 0.25);
+    background: oklch(var(--p) / 0.1);
+    color: oklch(var(--p));
   }
-  .btn-forge:hover:not(:disabled) {
-    @apply bg-primary/20 border-primary/50;
-    box-shadow: 0 0 12px oklch(var(--p) / 0.15);
+  .btn-panel:hover:not(:disabled) {
+    background: oklch(var(--p) / 0.18);
+    border-color: oklch(var(--p) / 0.4);
+    box-shadow: 0 0 16px oklch(var(--p) / 0.15);
   }
-  .btn-forge:active:not(:disabled) {
-    @apply bg-primary/25;
-    box-shadow: 0 0 4px oklch(var(--p) / 0.1);
+  .btn-panel:active:not(:disabled) {
+    background: oklch(var(--p) / 0.22);
+    transform: scale(0.98);
   }
-  .btn-forge:disabled {
+  .btn-panel:disabled {
     @apply cursor-not-allowed opacity-40;
   }
 
-  /* Comic Button (for canvas) */
-  .btn-comic {
-    @apply border border-base-content/20 rounded-lg font-bold tracking-wide transition-all duration-150;
+  /* Legacy aliases */
+  .btn-forge { @apply btn-panel; }
+  .btn-comic { @apply btn-panel; }
+
+  /* Panel Input */
+  .input-panel {
+    @apply rounded-lg bg-base-100/60 outline-none transition-all duration-200;
+    border: 1px solid oklch(var(--b3));
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
   }
-  .btn-comic:hover:not(:disabled) {
-    @apply border-primary/30;
-    box-shadow: 0 0 10px oklch(var(--p) / 0.1);
-  }
-  .btn-comic:active:not(:disabled) {
-    box-shadow: none;
+  .input-panel:focus {
+    border-color: oklch(var(--p) / 0.5);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 0 3px oklch(var(--p) / 0.1);
+    background: oklch(var(--b1) / 0.8);
   }
 
-  /* Forge Input */
-  .input-forge {
-    @apply border border-base-300 rounded-lg bg-base-100/60 outline-none focus:border-primary/40 focus:bg-base-100/80 transition-all duration-200;
-    box-shadow: inset 0 1px 2px oklch(var(--b1) / 0.3);
-  }
-  .input-forge:focus {
-    box-shadow: inset 0 1px 2px oklch(var(--b1) / 0.3), 0 0 0 2px oklch(var(--p) / 0.1);
-  }
+  /* Legacy alias */
+  .input-forge { @apply input-panel; }
 
-  /* Forge Background Effects */
-  .forge-bg {
+  /* Background Effects */
+  .panel-bg {
     background: oklch(var(--b1));
     background-image:
-      radial-gradient(ellipse at 50% 0%, oklch(var(--p) / 0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 80%, oklch(var(--s) / 0.03) 0%, transparent 50%);
+      radial-gradient(ellipse at 50% 0%, oklch(var(--p) / 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, oklch(var(--s) / 0.03) 0%, transparent 40%);
   }
 
-  .forge-bg-hero {
+  .panel-bg-hero {
     background:
-      radial-gradient(ellipse at 50% 30%, oklch(var(--p) / 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 20% 80%, oklch(var(--s) / 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 30% 20%, oklch(var(--p) / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, oklch(var(--s) / 0.05) 0%, transparent 40%),
       oklch(var(--b1));
   }
 
-  /* Forge Title - metallic gradient */
-  .forge-title {
-    background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--p) / 0.7), oklch(var(--s) / 0.5));
+  /* Legacy aliases */
+  .forge-bg { @apply panel-bg; }
+  .forge-bg-hero { @apply panel-bg-hero; }
+
+  /* Gradient Title */
+  .panel-title {
+    background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--s)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Forge Glow Animation */
-  .forge-glow {
-    animation: forge-glow 3s ease-in-out infinite alternate;
+  /* Legacy alias */
+  .forge-title { @apply panel-title; }
+
+  /* Glow Pulse */
+  .panel-glow {
+    animation: panel-glow 3s ease-in-out infinite alternate;
   }
 
-  @keyframes forge-glow {
-    0% { filter: drop-shadow(0 0 8px oklch(var(--p) / 0.15)); }
-    100% { filter: drop-shadow(0 0 24px oklch(var(--p) / 0.35)); }
+  @keyframes panel-glow {
+    0% { filter: drop-shadow(0 0 8px oklch(var(--p) / 0.1)); }
+    100% { filter: drop-shadow(0 0 20px oklch(var(--p) / 0.25)); }
   }
 
-  /* Forge Divider */
-  .forge-divider {
+  /* Legacy alias */
+  .forge-glow { @apply panel-glow; }
+
+  /* Divider */
+  .panel-divider {
     @apply relative h-px w-full;
-    background: linear-gradient(90deg, transparent, oklch(var(--p) / 0.3), transparent);
-  }
-  .forge-divider::before {
-    content: "";
-    @apply absolute left-1/2 -translate-x-1/2 -top-1 w-1.5 h-1.5 rounded-full bg-primary/60;
+    background: linear-gradient(90deg, transparent, oklch(var(--p) / 0.25), transparent);
   }
 
-  /* Speech Bubbles (for chat) */
+  /* Legacy alias */
+  .forge-divider { @apply panel-divider; }
+
+  /* Chat Bubbles */
   .speech-bubble {
-    @apply relative bg-base-300/60 rounded-xl px-3 py-2;
+    @apply relative bg-base-300/50 rounded-xl px-3 py-2;
+    border: 1px solid oklch(var(--b3) / 0.5);
   }
   .speech-bubble::after {
     content: "";
     @apply absolute -left-1.5 top-2.5;
-    width: 0;
-    height: 0;
+    width: 0; height: 0;
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
-    border-right: 6px solid oklch(var(--b3) / 0.6);
+    border-right: 6px solid oklch(var(--b3) / 0.5);
   }
 
   .speech-bubble-user {
     @apply relative bg-primary/10 rounded-xl px-3 py-2;
+    border: 1px solid oklch(var(--p) / 0.15);
   }
   .speech-bubble-user::after {
     content: "";
     @apply absolute -right-1.5 top-2.5;
-    width: 0;
-    height: 0;
+    width: 0; height: 0;
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
     border-left: 6px solid oklch(var(--p) / 0.08);
   }
 
-  .underline-sketch {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'%3E%3Cpath d='M0 8 Q 25 2, 50 8 T 100 8' stroke='%23D4953A' stroke-width='2' fill='none' opacity='0.4'/%3E%3C/svg%3E");
-    background-repeat: repeat-x;
+  /* Accent underline */
+  .underline-accent {
+    @apply relative;
+    background-image: linear-gradient(90deg, oklch(var(--p) / 0.4), oklch(var(--s) / 0.4));
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
     background-position: bottom;
-    background-size: 100px 10px;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
   }
+
+  /* Legacy alias */
+  .underline-sketch { @apply underline-accent; }
 }
 
 /* ========== Animations ========== */
@@ -231,43 +240,29 @@
   }
 
   @keyframes bounce-in {
-    0% { transform: scale(0) rotate(-5deg); opacity: 0; }
-    60% { transform: scale(1.02) rotate(0.5deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    0% { transform: scale(0.95); opacity: 0; }
+    60% { transform: scale(1.01); }
+    100% { transform: scale(1); opacity: 1; }
   }
 
   .animate-draw-in {
-    animation: draw-in 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    animation: draw-in 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform, opacity;
   }
 
   @keyframes draw-in {
-    0% {
-      opacity: 0;
-      transform: translateY(12px);
-      filter: blur(4px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
   .animate-doodle-pop {
-    animation: doodle-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: doodle-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform, opacity;
   }
 
   @keyframes doodle-pop {
-    0% {
-      transform: scale(0.9) translateY(8px);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-    }
+    0% { transform: scale(0.97) translateY(6px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
   }
 
   .animate-bounce-x {
@@ -277,7 +272,7 @@
 
   @keyframes bounce-x {
     0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(-8px); }
+    50% { transform: translateX(-6px); }
   }
 
   .animate-fade-in {
@@ -301,12 +296,12 @@
   }
 
   @keyframes slide-in-left {
-    0% { opacity: 0; transform: translateX(-16px); }
+    0% { opacity: 0; transform: translateX(-12px); }
     100% { opacity: 1; transform: translateX(0); }
   }
 
   @keyframes slide-in-right {
-    0% { opacity: 0; transform: translateX(16px); }
+    0% { opacity: 0; transform: translateX(12px); }
     100% { opacity: 1; transform: translateX(0); }
   }
 
@@ -322,16 +317,15 @@
   }
 
   .animate-success-celebration {
-    animation: success-celebration 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: success-celebration 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
   }
 
   @keyframes success-celebration {
     0% { transform: scale(1); }
-    25% { transform: scale(1.1) rotate(5deg); }
-    50% { transform: scale(0.95) rotate(-5deg); }
-    75% { transform: scale(1.05) rotate(3deg); }
-    100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.06); }
+    50% { transform: scale(0.97); }
+    100% { transform: scale(1); }
   }
 
   .animate-pulse-highlight {
@@ -339,8 +333,8 @@
   }
 
   @keyframes pulse-highlight {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0); }
-    50% { box-shadow: 0 0 0 8px rgba(var(--color-primary-rgb), 0.3); }
+    0%, 100% { box-shadow: 0 0 0 0 oklch(var(--p) / 0); }
+    50% { box-shadow: 0 0 0 8px oklch(var(--p) / 0.2); }
   }
 
   .touch-target {
@@ -361,8 +355,8 @@
   }
 
   [data-theme],
-  .btn,
-  .card-forge,
+  .card-panel,
+  .btn-panel,
   a,
   nav,
   input,
@@ -372,17 +366,6 @@
   }
 }
 
-/* Focus */
-:focus-visible {
-  outline: 2px solid oklch(var(--p));
-  outline-offset: 2px;
-}
-
-.btn:focus-visible {
-  outline: 2px solid oklch(var(--p));
-  outline-offset: 2px;
-}
-
 /* ========== tldraw Canvas Overrides ========== */
 
 .infinite-canvas-container {
@@ -390,7 +373,7 @@
 }
 
 .infinite-canvas-container .tl-container {
-  --tl-font-family: 'Nunito', 'Comic Neue', sans-serif;
+  --tl-font-family: 'Nunito', system-ui, sans-serif;
   background: transparent !important;
 }
 
@@ -426,10 +409,6 @@
 .infinite-canvas-container .tl-selection__fg,
 .infinite-canvas-container .tl-selection__bg {
   display: none !important;
-}
-
-.infinite-canvas-container .tl-shape:hover {
-  /* no extra hover */
 }
 
 .infinite-canvas-container ~ [class*="modal"],

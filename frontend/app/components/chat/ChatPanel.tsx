@@ -117,7 +117,7 @@ export function ChatPanel({
         <button
           type="button"
           onClick={() => setRunMode(isYolo ? "manual" : "yolo")}
-          className={`btn btn-xs gap-0.5 ${isYolo ? "btn-primary btn-sm border-2" : "btn-ghost"} !min-h-0 !h-6 text-xs font-comic`}
+          className={`btn btn-xs gap-0.5 ${isYolo ? "btn-primary btn-sm border-2" : "btn-ghost"} !min-h-0 !h-6 text-xs font-mono`}
           aria-label={isYolo ? "切换手动模式" : "切换YOLO模式"}
           title={isYolo ? "YOLO：自动确认" : "手动：逐阶段确认"}
         >
@@ -175,7 +175,7 @@ export function ChatPanel({
                 size="lg"
                 onClick={onGenerate}
                 disabled={generateDisabled}
-                className="gap-1.5 touch-target btn-comic"
+                className="gap-1.5 touch-target btn-panel"
                 aria-label="开始生成漫剧"
                 aria-describedby={generateDisabledReasonId}
               >
@@ -225,7 +225,7 @@ export function ChatPanel({
                 onConfirm(feedback || undefined);
                 setInput("");
               }}
-              className="gap-0.5 !px-2.5 !py-0.5 !min-h-0 !h-6 text-xs border-2 shadow-brutal-sm"
+              className="gap-0.5 !px-2.5 !py-0.5 !min-h-0 !h-6 text-xs border border-primary/30"
             >
               <CheckIcon className="w-3 h-3" />
               通过

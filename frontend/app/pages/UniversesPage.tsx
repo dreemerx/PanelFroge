@@ -57,29 +57,26 @@ export function UniversesPage() {
 
 	return (
 		<div className="min-h-screen bg-base-100 font-sans">
-			<header className="navbar bg-base-200 border-b border-base-300">
+			<header className="flex items-center px-4 h-10 glass border-b border-base-300/30">
 				<div className="flex-1">
-					<Link to="/" className="btn btn-ghost">
-						← 返回首页
+					<Link to="/" className="btn btn-ghost btn-sm">
+						&larr; 返回首页
 					</Link>
 				</div>
-				<div className="font-comic text-lg text-primary font-bold tracking-wider">
-					<span className="inline-flex items-center gap-2">
-						<GlobeAltIcon className="w-5 h-5" aria-hidden="true" />
-						IP 宇宙
-					</span>
+				<div className="flex items-center gap-2 text-base font-bold tracking-tight">
+					<GlobeAltIcon className="w-4 h-4 text-primary" aria-hidden="true" />
+					<span className="gradient-text">IP 宇宙</span>
 				</div>
 				<div className="flex-1" />
 			</header>
 
 			<main className="container mx-auto px-4 py-8 max-w-6xl">
-				{/* Header */}
 				<div className="flex items-center justify-between mb-8">
 					<div>
-						<h1 className="text-3xl font-heading font-bold underline-sketch">
+						<h1 className="text-3xl font-heading font-bold underline-accent">
 							IP 宇宙
 						</h1>
-						<p className="text-sm text-base-content/50 mt-1">
+						<p className="text-sm text-base-content/40 mt-1">
 							管理跨项目的共享世界观和角色库
 						</p>
 					</div>
@@ -89,24 +86,22 @@ export function UniversesPage() {
 					</Button>
 				</div>
 
-				{/* Loading */}
 				{isLoading && (
 					<div className="flex items-center justify-center py-20">
 						<span className="loading loading-spinner loading-lg text-primary" />
 					</div>
 				)}
 
-				{/* Empty state */}
 				{!isLoading && universes.length === 0 && (
 					<Card className="text-center py-16">
 						<GlobeAltIcon
-							className="w-16 h-16 mx-auto mb-4 text-primary/50"
+							className="w-16 h-16 mx-auto mb-4 text-primary/30"
 							aria-hidden="true"
 						/>
 						<h2 className="text-xl font-heading font-bold mb-2">
 							还没有 IP 宇宙
 						</h2>
-						<p className="text-sm text-base-content/50 mb-6">
+						<p className="text-sm text-base-content/40 mb-6">
 							创建你的第一个 IP 宇宙，开始构建跨项目的故事世界
 						</p>
 						<Button onClick={() => setShowCreate(true)}>
@@ -116,7 +111,6 @@ export function UniversesPage() {
 					</Card>
 				)}
 
-				{/* Universe grid */}
 				{!isLoading && universes.length > 0 && (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{universes.map((u) => (
@@ -126,7 +120,6 @@ export function UniversesPage() {
 				)}
 			</main>
 
-			{/* Create modal */}
 			{showCreate && (
 				<Modal
 					isOpen={showCreate}
@@ -144,9 +137,9 @@ export function UniversesPage() {
 						/>
 
 						<div>
-							<label className="label text-xs font-bold">简介</label>
+							<label className="label text-xs font-semibold">简介</label>
 							<textarea
-								className="textarea textarea-bordered bg-base-200 w-full h-20 text-sm"
+								className="textarea textarea-bordered bg-base-200/50 w-full h-20 text-sm border-base-300/50"
 								placeholder="宇宙的简要描述..."
 								value={createForm.description}
 								onChange={(e) =>
@@ -156,9 +149,9 @@ export function UniversesPage() {
 						</div>
 
 						<div>
-							<label className="label text-xs font-bold">世界观设定</label>
+							<label className="label text-xs font-semibold">世界观设定</label>
 							<textarea
-								className="textarea textarea-bordered bg-base-200 w-full h-24 text-sm"
+								className="textarea textarea-bordered bg-base-200/50 w-full h-24 text-sm border-base-300/50"
 								placeholder="统一的世界观设定，所有章节必须遵循..."
 								value={createForm.world_setting}
 								onChange={(e) =>
@@ -168,9 +161,9 @@ export function UniversesPage() {
 						</div>
 
 						<div>
-							<label className="label text-xs font-bold">统一风格规则</label>
+							<label className="label text-xs font-semibold">统一风格规则</label>
 							<textarea
-								className="textarea textarea-bordered bg-base-200 w-full h-16 text-sm"
+								className="textarea textarea-bordered bg-base-200/50 w-full h-16 text-sm border-base-300/50"
 								placeholder="角色设计、场景风格等统一规则..."
 								value={createForm.style_rules}
 								onChange={(e) =>
