@@ -50,7 +50,7 @@ class DoubaoVideoService:
         *,
         max_retries: int = 3,
         poll_interval: float = 5.0,
-        max_poll_time: float = 600.0,
+        max_poll_time: float = 1200.0,
     ):
         """初始化豆包视频服务
 

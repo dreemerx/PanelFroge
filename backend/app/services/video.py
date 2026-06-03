@@ -102,7 +102,7 @@ class VideoService:
         return self._extract_url_from_text(data.get("content", ""))
 
     async def _poll_task_until_done(
-        self, task_id: str, *, poll_interval_s: float = 5.0, max_polls: int = 120
+        self, task_id: str, *, poll_interval_s: float = 5.0, max_polls: int = 240
     ) -> dict[str, Any]:
         """轮询异步任务直到完成/失败。返回最终的任务数据。"""
         poll_url = self._build_poll_url(task_id)
