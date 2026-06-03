@@ -7,7 +7,6 @@ paid video APIs or extra manual setup.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import logging
 import shutil
@@ -91,14 +90,10 @@ class FakeVideoService:
             str(destination),
         ]
         try:
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            _, stderr = await process.communicate()
-            if process.returncode != 0:
-                raise RuntimeError(stderr.decode(errors="ignore")[:500])
+            from app.utils.subprocess_compat import run_subprocess
+            result = await run_subprocess(*cmd)
+            if result.returncode != 0:
+                raise RuntimeError(result.decode_stderr(errors="ignore")[:500])
         except FileNotFoundError as exc:
             raise RuntimeError("Fake video provider needs ffmpeg to create the default fixture") from exc
 

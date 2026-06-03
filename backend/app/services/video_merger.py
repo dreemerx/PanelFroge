@@ -15,6 +15,7 @@ from pathlib import Path
 import httpx
 
 from app.services.file_cleaner import get_local_path
+from app.utils.subprocess_compat import run_subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -148,16 +149,11 @@ class VideoMergerService:
 
             logger.info(f"Running ffmpeg: {' '.join(cmd)}")
 
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await process.communicate()
+            result = await run_subprocess(*cmd)
 
-            if process.returncode != 0:
+            if result.returncode != 0:
                 # 如果直接复制失败，尝试重新编码
-                logger.warning(f"ffmpeg copy failed, trying re-encode: {stderr.decode()}")
+                logger.warning(f"ffmpeg copy failed, trying re-encode: {result.decode_stderr()}")
 
                 cmd_reencode = [
                     "ffmpeg",
@@ -176,15 +172,10 @@ class VideoMergerService:
 
                 logger.info(f"Running ffmpeg (re-encode): {' '.join(cmd_reencode)}")
 
-                process = await asyncio.create_subprocess_exec(
-                    *cmd_reencode,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-                stdout, stderr = await process.communicate()
+                result = await run_subprocess(*cmd_reencode)
 
-                if process.returncode != 0:
-                    raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
+                if result.returncode != 0:
+                    raise RuntimeError(f"ffmpeg failed: {result.decode_stderr()}")
 
             logger.info(f"Video merged successfully: {output_path}")
 

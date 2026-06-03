@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import shutil
+import sys
+
+# Windows 默认 ProactorEventLoop 不支持 psycopg/asyncpg，强制使用 SelectorEventLoop
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from contextlib import asynccontextmanager
 from pathlib import Path
 

@@ -11,7 +11,6 @@ FFmpeg 混流将音频叠加到视频中。
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import uuid
 from pathlib import Path
@@ -398,15 +397,11 @@ class AudioService:
 
         logger.info("Running FFmpeg audio mix: %s", " ".join(cmd[:10]))
 
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
+        from app.utils.subprocess_compat import run_subprocess
+        result = await run_subprocess(*cmd)
 
-        if process.returncode != 0:
-            error_msg = stderr.decode(errors="replace")
+        if result.returncode != 0:
+            error_msg = result.decode_stderr()
             raise RuntimeError(f"FFmpeg audio mix failed: {error_msg[:500]}")
 
         logger.info("Audio mixed successfully: %s", output_path)
