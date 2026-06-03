@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 from uuid import uuid4
@@ -69,18 +70,19 @@ class ImageComposer:
         Returns:
             拼接后的图片字节流（PNG 格式）
         """
-        # 下载分镜图
-        shot_img = await self._download_image(shot_image_url)
-
-        # 下载角色图
+        # 并行下载分镜图和所有角色图
+        all_urls = [shot_image_url] + list(character_image_urls)
+        results = await asyncio.gather(
+            *[self._download_image(url) for url in all_urls],
+            return_exceptions=True,
+        )
+        shot_img = results[0]
+        if isinstance(shot_img, BaseException):
+            raise shot_img
         char_imgs: list[Image.Image] = []
-        for url in character_image_urls:
-            try:
-                img = await self._download_image(url)
-                char_imgs.append(img)
-            except Exception:
-                # 下载失败则跳过该角色
-                continue
+        for r in results[1:]:
+            if isinstance(r, Image.Image):
+                char_imgs.append(r)
 
         # 如果没有角色图，直接返回分镜图
         if not char_imgs:
@@ -186,18 +188,19 @@ class ImageComposer:
         if not character_image_urls:
             raise ValueError("No character images provided for composing reference image")
 
-        # 下载角色图
+        # 并行下载角色图
+        results = await asyncio.gather(
+            *[self._download_image(url) for url in character_image_urls],
+            return_exceptions=True,
+        )
         char_imgs: list[Image.Image] = []
         char_img_bytes: list[bytes] = []
-        for url in character_image_urls:
-            try:
-                img = await self._download_image(url)
-                char_imgs.append(img)
+        for r in results:
+            if isinstance(r, Image.Image):
+                char_imgs.append(r)
                 buf = io.BytesIO()
-                img.save(buf, format="PNG")
+                r.save(buf, format="PNG")
                 char_img_bytes.append(buf.getvalue())
-            except Exception:
-                continue
 
         if not char_imgs:
             raise RuntimeError("All character images failed to download")

@@ -238,6 +238,22 @@ class Settings(BaseSettings):
         description="思考链详细级别：minimal（仅 decision）/ normal（decision + reviewing）/ verbose（全部）",
     )
 
+    # ============================================
+    # 并发控制（阶段内并行化）
+    # ============================================
+    max_concurrent_generations: int = Field(
+        default=3,
+        description="图片/视频 API 最大并发调用数",
+    )
+    max_concurrent_videos: int = Field(
+        default=2,
+        description="视频生成任务最大并发数",
+    )
+    max_concurrent_tts: int = Field(
+        default=4,
+        description="TTS 合成最大并发数",
+    )
+
     request_timeout_s: float = 120.0
     public_base_url: str | None = Field(
         default=None,

@@ -1,4 +1,4 @@
-const DEV_BACKEND_PORT = "18765";
+const DEV_BACKEND_PORT = "18767";
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 type BackendTransport = "http" | "ws";

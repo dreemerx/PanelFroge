@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: docker.1ms.run/postgres:16-alpine
     environment:
       POSTGRES_USER: panelforge
       POSTGRES_PASSWORD: panelforge_dev
@@ -16,7 +16,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: docker.1ms.run/redis:7-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -28,7 +28,7 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    image: ghcr.io/xeron2000/panelforge-backend:latest
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,23 +37,14 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # 覆盖 .env 中的数据库和 Redis 配置，使用 Docker 内部服务名
-      DATABASE_URL: postgresql+asyncpg://panelforge:panelforge_dev@postgres:5432/panelforge
-      REDIS_URL: redis://redis:6379/0
-      # task_manager 是进程内字典，必须单 worker 才安全
+      # host 网络模式下使用 localhost 连接，避免 asyncpg 对非 localhost 默认启用 SSL
+      DATABASE_URL: postgresql+asyncpg://panelforge:panelforge_dev@localhost:5433/panelforge
+      REDIS_URL: redis://localhost:6379/0
       WEB_CONCURRENCY: "1"
-      # 如果图像/视频服务也在 Docker 中，取消注释并修改为实际的容器名和端口
-      # IMAGE_BASE_URL: http://your_image_service:port
-      # VIDEO_BASE_URL: http://your_video_service:port
-    ports:
-      - "18765:18765"
+    network_mode: host
     volumes:
       - ./backend/app/static:/app/app/static
     restart: unless-stopped
-    # 如果需要连接到其他 Docker 网络，取消注释并修改网络名
-    # networks:
-    #   - default
-    #   - your_external_network
 
   frontend:
     build: ./frontend
@@ -66,8 +57,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-
-# 如果需要连接到外部 Docker 网络，取消注释并修改网络名
-# networks:
-#   your_external_network:
-#     external: true

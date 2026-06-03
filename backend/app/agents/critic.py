@@ -15,6 +15,7 @@ from app.config import Settings
 from app.models.project import Character, Shot
 from app.services.file_cleaner import STATIC_DIR
 from app.services.text_factory import create_text_service
+from app.utils.concurrency import run_bounded
 
 logger = logging.getLogger(__name__)
 
@@ -290,19 +291,9 @@ class CriticAgent(BaseAgent):
             is_loading=True,
         )
 
-        scores: dict[str, Any] = {}
-        min_score = 10.0
-        any_regenerate = False
-
-        for i, char in enumerate(characters):
-            progress_val = (i) / total
-            await self.send_message(
-                ctx,
-                f"审查角色: {char.name} ({i + 1}/{total})",
-                progress=progress_val,
-            )
-
-            # Build the text prompt with character description
+        # ── 阶段1：构建所有 review 参数（不需要 session） ──
+        review_params: list[tuple[Character, str]] = []
+        for char in characters:
             desc = char.description or char.name
             user_prompt = (
                 f"请审查以下角色形象图。\n\n"
@@ -310,8 +301,16 @@ class CriticAgent(BaseAgent):
                 f"角色描述: {desc}\n\n"
                 f"请根据角色描述对形象图进行打分，重点关注角色一致性。"
             )
+            review_params.append((char, user_prompt))
 
-            review = await self._run_review(
+        # ── 阶段2：并行调用 VLM 审查（外部 API） ──
+        max_gen = ctx.settings.max_concurrent_generations
+
+        async def _review_one(
+            param: tuple[Character, str],
+        ) -> dict[str, Any]:
+            char, user_prompt = param
+            return await self._run_review(
                 ctx,
                 system_prompt=CHARACTER_REVIEW_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
@@ -321,7 +320,30 @@ class CriticAgent(BaseAgent):
                 entity_name=char.name,
             )
 
-            # Thinking: decision after each character review
+        coros = [_review_one(p) for p in review_params]
+        results = await run_bounded(coros, max_gen)
+
+        # ── 阶段3：聚合结果 ──
+        scores: dict[str, Any] = {}
+        min_score = 10.0
+        any_regenerate = False
+
+        for i, ((char, _prompt), result) in enumerate(zip(review_params, results)):
+            try:
+                if isinstance(result, BaseException):
+                    raise result
+                review = result
+            except Exception:
+                review = {
+                    "score": 5.0,
+                    "dimensions": {"consistency": 5, "quality": 5, "composition": 5},
+                    "issues": ["审查调用失败"],
+                    "suggestions": ["请检查服务配置"],
+                    "entity_type": "character",
+                    "entity_id": char.id,
+                    "will_regenerate": False,
+                }
+
             issue_count = len(review.get("issues", []))
             await self.send_thinking(
                 ctx,
@@ -384,19 +406,9 @@ class CriticAgent(BaseAgent):
             is_loading=True,
         )
 
-        scores: dict[str, Any] = {}
-        min_score = 10.0
-        any_regenerate = False
-
-        for i, shot in enumerate(shots):
-            progress_val = (i) / total
-            await self.send_message(
-                ctx,
-                f"审查分镜: 第 {shot.order} 镜 ({i + 1}/{total})",
-                progress=progress_val,
-            )
-
-            # Build the text prompt with shot description
+        # ── 阶段1：构建所有 review 参数 ──
+        review_params: list[tuple[Shot, str]] = []
+        for shot in shots:
             desc = shot.description or shot.image_prompt or f"分镜 {shot.order}"
             scene = shot.scene or ""
             action = shot.action or ""
@@ -414,8 +426,16 @@ class CriticAgent(BaseAgent):
                 f"综合描述: {desc}\n\n"
                 f"请根据场景描述对分镜画面进行打分，重点关注场景一致性。"
             )
+            review_params.append((shot, user_prompt))
 
-            review = await self._run_review(
+        # ── 阶段2：并行调用 VLM 审查（外部 API） ──
+        max_gen = ctx.settings.max_concurrent_generations
+
+        async def _review_one(
+            param: tuple[Shot, str],
+        ) -> dict[str, Any]:
+            shot, user_prompt = param
+            return await self._run_review(
                 ctx,
                 system_prompt=SHOT_REVIEW_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
@@ -425,7 +445,30 @@ class CriticAgent(BaseAgent):
                 entity_name=f"分镜 {shot.order}",
             )
 
-            # Thinking: decision after each shot review
+        coros = [_review_one(p) for p in review_params]
+        results = await run_bounded(coros, max_gen)
+
+        # ── 阶段3：聚合结果 ──
+        scores: dict[str, Any] = {}
+        min_score = 10.0
+        any_regenerate = False
+
+        for i, ((shot, _prompt), result) in enumerate(zip(review_params, results)):
+            try:
+                if isinstance(result, BaseException):
+                    raise result
+                review = result
+            except Exception:
+                review = {
+                    "score": 5.0,
+                    "dimensions": {"consistency": 5, "quality": 5, "composition": 5},
+                    "issues": ["审查调用失败"],
+                    "suggestions": ["请检查服务配置"],
+                    "entity_type": "shot",
+                    "entity_id": shot.id,
+                    "will_regenerate": False,
+                }
+
             issue_count = len(review.get("issues", []))
             await self.send_thinking(
                 ctx,

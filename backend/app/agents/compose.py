@@ -9,12 +9,12 @@ from sqlalchemy.orm import InstrumentedAttribute
 from app.agents.base import AgentContext, BaseAgent, CompletionInfo
 from app.agents.utils import build_character_context
 from app.models.project import Character, Shot
-from app.orchestration.state import workflow_progress_for_stage
 from app.services.audio_service import AudioService
 from app.services.creative_control import collect_project_blocking_clips
 from app.services.doubao_video import DoubaoVideoService
 from app.services.image_composer import ImageComposer
 from app.services.shot_binding import resolve_shot_bound_approved_characters
+from app.utils.concurrency import run_bounded
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class ComposeAgent(BaseAgent):
         if ctx.target_ids and ctx.target_ids.shot_ids:
             query = query.where(Shot.id.in_(ctx.target_ids.shot_ids))
         res = await ctx.session.execute(query)
-        shots = res.scalars().all()
+        shots = list(res.scalars().all())
 
         if not shots:
             await self.send_message(ctx, "所有分镜已有视频。")
@@ -61,7 +61,6 @@ class ComposeAgent(BaseAgent):
         image_mode = (ctx.settings.video_image_mode or "first_frame").strip().lower()
 
         total = len(shots)
-        updated_count = 0
         mode_desc = "图生视频" if use_image_mode else "文生视频"
 
         # Thinking: planning phase — starting video generation
@@ -76,93 +75,87 @@ class ComposeAgent(BaseAgent):
             ctx, f"开始为 {total} 个分镜生成视频（{mode_desc}）...", progress=0.0, is_loading=True
         )
 
-        for i, shot in enumerate(shots):
-            try:
-                shot_progress = i / max(total, 1)
-                await self.send_progress_batch(
-                    ctx, total=total, current=i, message=f"   正在生成视频 {i + 1}/{total}..."
-                )
-                await ctx.ws.send_event(
-                    ctx.project.id,
-                    {
-                        "type": "run_progress",
-                        "data": {
-                            "run_id": ctx.run.id,
-                            "current_agent": "compose",
-                            "current_stage": "compose",
-                            "stage": "compose",
-                            "next_stage": None,
-                            "progress": workflow_progress_for_stage(
-                                "compose", within_stage=shot_progress
-                            ),
-                        },
-                    },
-                )
-                characters = await resolve_shot_bound_approved_characters(ctx.session, shot)
-                video_prompt = self._build_video_prompt(shot, characters, style=ctx.project.style)
+        # ── 阶段1：预取所有 shot 数据（需要 session） ──
+        # 每个元素: (shot, characters, video_prompt, duration, ref_image_data)
+        # ref_image_data: doubao 模式下为 str|None (image_url), 其他为 bytes|None
+        prep_list: list[tuple[Shot, list[Character], str, float, str | bytes | None]] = []
 
-                # Thinking: reasoning for each video
-                await self.send_thinking(
-                    ctx,
-                    phase="reasoning",
-                    content=f"分镜 #{shot.order} 视频提示词：{video_prompt[:80]}...",
-                )
+        for shot in shots:
+            characters = await resolve_shot_bound_approved_characters(ctx.session, shot)
+            video_prompt = self._build_video_prompt(shot, characters, style=ctx.project.style)
+            duration = self._get_duration(shot, default_duration)
 
-                duration = self._get_duration(shot, default_duration)
-
-                if is_doubao:
-                    image_url: str | None = None
-                    if use_image_mode and shot.image_url:
-                        if image_mode == "reference":
-                            try:
-                                char_image_urls = [c.image_url for c in characters if c.image_url]
-                                image_url = (
-                                    await self.image_composer.compose_and_save_reference_image(
-                                        shot_image_url=shot.image_url,
-                                        character_image_urls=char_image_urls,
-                                    )
-                                )
-                            except Exception:
-                                image_url = shot.image_url
-                        else:
-                            image_url = shot.image_url
-
-                    video_url = await ctx.video.generate_url(
-                        prompt=video_prompt,
-                        image_url=image_url,
-                        duration=int(duration) if duration in (5, 10) else 5,
-                        ratio=ctx.settings.doubao_video_ratio,
-                        generate_audio=ctx.settings.doubao_generate_audio,
-                    )
-                else:
-                    reference_image_bytes: bytes | None = None
-                    if use_image_mode and shot.image_url:
+            ref_data: str | bytes | None = None
+            if is_doubao:
+                if use_image_mode and shot.image_url:
+                    if image_mode == "reference":
                         try:
-                            if image_mode == "reference":
-                                char_image_urls = [c.image_url for c in characters if c.image_url]
-                                reference_image_bytes = (
-                                    await self.image_composer.compose_reference_image(
-                                        shot_image_url=shot.image_url,
-                                        character_image_urls=char_image_urls,
-                                    )
-                                )
-                            else:
-                                reference_image_bytes = (
-                                    await self.image_composer.compose_reference_image(
-                                        shot_image_url=shot.image_url,
-                                        character_image_urls=[],
-                                    )
-                                )
+                            char_image_urls = [c.image_url for c in characters if c.image_url]
+                            ref_data = await self.image_composer.compose_and_save_reference_image(
+                                shot_image_url=shot.image_url,
+                                character_image_urls=char_image_urls,
+                            )
                         except Exception:
-                            reference_image_bytes = None
+                            ref_data = shot.image_url
+                    else:
+                        ref_data = shot.image_url
+            else:
+                if use_image_mode and shot.image_url:
+                    try:
+                        if image_mode == "reference":
+                            char_image_urls = [c.image_url for c in characters if c.image_url]
+                            ref_data = await self.image_composer.compose_reference_image(
+                                shot_image_url=shot.image_url,
+                                character_image_urls=char_image_urls,
+                            )
+                        else:
+                            ref_data = await self.image_composer.compose_reference_image(
+                                shot_image_url=shot.image_url,
+                                character_image_urls=[],
+                            )
+                    except Exception:
+                        ref_data = None
 
-                    video_url = await ctx.video.generate_url(
-                        prompt=video_prompt,
-                        image_bytes=reference_image_bytes,
-                    )
+            prep_list.append((shot, characters, video_prompt, duration, ref_data))
 
-                shot.video_url = video_url
-                shot.duration = duration
+        # ── 阶段2：并行调用视频生成 API（不使用 session） ──
+        max_vid = ctx.settings.max_concurrent_videos
+
+        async def _generate_one(
+            prep: tuple[Shot, list[Character], str, float, str | bytes | None],
+        ) -> str:
+            video_prompt, duration, ref_data = prep[2], prep[3], prep[4]
+            if is_doubao:
+                return await ctx.video.generate_url(
+                    prompt=video_prompt,
+                    image_url=ref_data if isinstance(ref_data, str) else None,
+                    duration=int(duration) if duration in (5, 10) else 5,
+                    ratio=ctx.settings.doubao_video_ratio,
+                    generate_audio=ctx.settings.doubao_generate_audio,
+                )
+            else:
+                return await ctx.video.generate_url(
+                    prompt=video_prompt,
+                    image_bytes=ref_data if isinstance(ref_data, bytes) else None,
+                )
+
+        coros = [_generate_one(p) for p in prep_list]
+        results = await run_bounded(coros, max_vid)
+
+        # ── 阶段3：顺序写 DB + 发送事件 ──
+        updated_count = 0
+        for i, (prep, result) in enumerate(zip(prep_list, results)):
+            shot = prep[0]
+            try:
+                if isinstance(result, BaseException):
+                    raise result
+
+                await self.send_progress_batch(
+                    ctx, total=total, current=i, message=f"   正在保存视频 {i + 1}/{total}..."
+                )
+
+                shot.video_url = result
+                shot.duration = prep[3]
                 ctx.session.add(shot)
                 await ctx.session.flush()
                 await self.send_shot_event(ctx, shot, "shot_updated")
@@ -321,62 +314,84 @@ class ComposeAgent(BaseAgent):
             is_loading=True,
         )
 
-        for i, shot in enumerate(shots):
+        # ── 阶段1：预取 BGM 匹配 + 构建 TTS 参数（同步操作） ──
+        # 每个元素: (shot, character_name, bgm_path, bgm_type)
+        audio_prep: list[tuple[Shot, str, str | None, str | None]] = []
+        for shot in shots:
+            character_name = ""
+            if tts_enabled and shot.dialogue and shot.character_ids:
+                for char in characters:
+                    if char.id in shot.character_ids:
+                        character_name = char.name
+                        break
+
+            bgm_path: str | None = None
+            bgm_type: str | None = None
+            if bgm_enabled:
+                bgm_path = audio_service.match_bgm(
+                    scene=shot.scene,
+                    expression=shot.expression,
+                )
+                if bgm_path:
+                    bgm_type = bgm_path.rsplit("/", 1)[-1].replace(".mp3", "")
+
+            audio_prep.append((shot, character_name, bgm_path, bgm_type))
+
+        # ── 阶段2：并行生成 TTS + 混音（外部 API + FFmpeg，不使用 session） ──
+        max_tts = ctx.settings.max_concurrent_tts
+
+        async def _process_audio(
+            prep: tuple[Shot, str, str | None, str | None],
+        ) -> tuple[str | None, str | None]:
+            """返回 (tts_url, new_video_url)"""
+            shot, character_name, bgm_path, _bgm_type = prep
+
+            tts_url: str | None = None
+            if tts_enabled and shot.dialogue:
+                tts_url = await audio_service.generate_character_tts(
+                    dialogue=shot.dialogue,
+                    character_name=character_name,
+                    characters=characters,
+                )
+
+            new_video_url: str | None = None
+            if (tts_url or bgm_path) and shot.video_url:
+                new_video_url = await audio_service.mix_audio_into_video(
+                    video_path=shot.video_url,
+                    tts_path=tts_url,
+                    bgm_path=bgm_path,
+                )
+
+            return tts_url, new_video_url
+
+        coros = [_process_audio(p) for p in audio_prep]
+        results = await run_bounded(coros, max_tts)
+
+        # ── 阶段3：顺序写 DB + 发送事件 ──
+        for i, (prep, result) in enumerate(zip(audio_prep, results)):
+            shot, _character_name, _bgm_path, bgm_type = prep
             try:
                 await self.send_progress_batch(
                     ctx, total=total, current=i,
-                    message=f"   正在处理音频 {i + 1}/{total}...",
+                    message=f"   正在保存音频 {i + 1}/{total}...",
                 )
 
-                tts_url: str | None = None
-                bgm_type: str | None = None
-                bgm_path: str | None = None
+                if isinstance(result, BaseException):
+                    raise result
 
-                # 1. 生成 TTS（如果有对白）
-                if tts_enabled and shot.dialogue:
-                    # 从 character_ids 找角色名
-                    character_name = ""
-                    if shot.character_ids:
-                        for char in characters:
-                            if char.id in shot.character_ids:
-                                character_name = char.name
-                                break
+                tts_url, new_video_url = result
 
-                    tts_url = await audio_service.generate_character_tts(
-                        dialogue=shot.dialogue,
-                        character_name=character_name,
-                        characters=characters,
-                    )
-                    if tts_url:
-                        shot.tts_url = tts_url
+                if tts_url:
+                    shot.tts_url = tts_url
+                if bgm_type:
+                    shot.bgm_type = bgm_type
+                if new_video_url and new_video_url != shot.video_url:
+                    shot.video_url = new_video_url
+                    audio_count += 1
 
-                # 2. 匹配 BGM
-                if bgm_enabled:
-                    bgm_path = audio_service.match_bgm(
-                        scene=shot.scene,
-                        expression=shot.expression,
-                    )
-                    if bgm_path:
-                        # 提取 BGM 类型名称
-                        bgm_type = bgm_path.rsplit("/", 1)[-1].replace(".mp3", "")
-                        shot.bgm_type = bgm_type
-
-                # 3. 混入视频（如果有 TTS 或 BGM）
-                if tts_url or bgm_path:
-                    new_video_url = await audio_service.mix_audio_into_video(
-                        video_path=shot.video_url,
-                        tts_path=tts_url,
-                        bgm_path=bgm_path,
-                    )
-                    if new_video_url != shot.video_url:
-                        shot.video_url = new_video_url
-                        audio_count += 1
-
-                # 更新分镜
                 ctx.session.add(shot)
                 await ctx.session.flush()
 
-                # 发送音频生成事件
                 await ctx.ws.send_event(
                     ctx.project.id,
                     {

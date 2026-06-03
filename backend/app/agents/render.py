@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import asyncio
+import json
 import logging
 
 from sqlalchemy import select
@@ -18,6 +18,7 @@ from app.services.character_bible import (
 from app.services.image_composer import ImageComposer
 from app.services.shot_binding import resolve_shot_bound_approved_characters
 from app.services.version_service import VersionService, character_snapshot, shot_snapshot
+from app.utils.concurrency import run_bounded
 
 logger = logging.getLogger(__name__)
 
@@ -113,99 +114,83 @@ class RenderAgent(BaseAgent):
         if ctx.target_ids and ctx.target_ids.character_ids:
             query = query.where(Character.id.in_(ctx.target_ids.character_ids))
         res = await ctx.session.execute(query)
-        characters = res.scalars().all()
+        characters = list(res.scalars().all())
 
         if not characters:
             await self.send_message(ctx, "所有角色已有形象图。")
             return 0
 
         total = len(characters)
+        style = ctx.project.style or ""
 
         # Thinking: planning phase — starting character rendering
         await self.send_thinking(
             ctx,
             phase="planning",
             content="正在构建角色形象描述，注入风格和面部锚定词...",
-            details=f"共 {total} 个角色待生成，风格：{ctx.project.style or '默认'}",
+            details=f"共 {total} 个角色待生成，风格：{style or '默认'}",
         )
 
         await self.send_message(
             ctx, f"开始为 {total} 个角色生成形象图...", progress=0.0, is_loading=True
         )
 
-        updated_count = 0
-        style = ctx.project.style or ""
-        for i, char in enumerate(characters):
+        # ── 阶段1：预取所有 prompt（需要 session 读 DB） ──
+        prompt_map: dict[int, str] = {}
+        for char in characters:
+            prompt_map[char.id] = await self._build_character_prompt(char, style=style, session=ctx.session)
+            await self.version_service.auto_snapshot_character(
+                ctx.session, char, run_id=ctx.run.id, trigger="generation",
+            )
+        await ctx.session.flush()
+
+        # ── 阶段2：并行调用外部 API（不使用 session） ──
+        max_gen = ctx.settings.max_concurrent_generations
+
+        async def _generate_one(char: Character) -> tuple[str, str | None, list[float] | None]:
+            """生成图片 + 生成 visual_notes + 计算 face_embedding"""
+            image_url = await self.generate_and_cache_image(ctx, prompt=prompt_map[char.id])
+            visual_notes = None
+            if not char.visual_notes and char.description:
+                try:
+                    visual_notes = await auto_populate_visual_notes(char, ctx.llm)
+                except Exception as e:
+                    logger.warning("Failed to auto-populate visual_notes for %s: %s", char.name, e)
+            embedding = None
             try:
+                embedding = await compute_face_embedding(image_url)
+            except Exception as e:
+                logger.warning("Failed to compute face embedding for %s: %s", char.name, e)
+            return image_url, visual_notes, embedding
+
+        coros = [_generate_one(char) for char in characters]
+        results = await run_bounded(coros, max_gen)
+
+        # ── 阶段3：顺序写 DB + 发送事件 ──
+        updated_count = 0
+        for i, (char, result) in enumerate(zip(characters, results)):
+            try:
+                if isinstance(result, BaseException):
+                    raise result
+                image_url, visual_notes, embedding = result
+
                 await self.send_progress_batch(
-                    ctx,
-                    total=total,
-                    current=i,
-                    message=f"   正在绘制：{char.name} ({i + 1}/{total})",
+                    ctx, total=total, current=i,
+                    message=f"   正在保存：{char.name} ({i + 1}/{total})",
                 )
-                image_prompt = await self._build_character_prompt(char, style=style, session=ctx.session)
-                version = await self.version_service.auto_snapshot_character(
-                    ctx.session,
-                    char,
-                    run_id=ctx.run.id,
-                    trigger="generation",
-                )
-                if version is not None:
-                    await ctx.session.flush()
-                    await ctx.ws.send_event(
-                        ctx.project.id,
-                        {
-                            "type": "version_created",
-                            "data": {
-                                "entity_type": "character",
-                                "entity_id": char.id,
-                                "version": version.version,
-                                "trigger": version.trigger,
-                            },
-                        },
-                    )
-                # Thinking: reasoning for each character
-                await self.send_thinking(
-                    ctx,
-                    phase="reasoning",
-                    content=f"为 {char.name} 生成形象图，prompt 长度 {len(image_prompt)} 字符",
-                )
-                external_url = await self.generate_and_cache_image(ctx, prompt=image_prompt)
-                char.image_url = external_url
+
+                char.image_url = image_url
+                if visual_notes:
+                    char.visual_notes = visual_notes
+                if embedding is not None:
+                    char.face_embedding = json.dumps(embedding)
+                    logger.info("Computed face embedding for character %s", char.name)
                 ctx.session.add(char)
                 await ctx.session.flush()
 
-                # Auto-populate visual_notes if missing
-                if not char.visual_notes and char.description:
-                    try:
-                        visual_notes = await auto_populate_visual_notes(char, ctx.llm)
-                        if visual_notes:
-                            char.visual_notes = visual_notes
-                            ctx.session.add(char)
-                            await ctx.session.flush()
-                    except Exception as e:
-                        logger.warning("Failed to auto-populate visual_notes for %s: %s", char.name, e)
-
-                # Auto-compute face embedding after image is generated
-                if not char.face_embedding and external_url:
-                    try:
-                        embedding = await compute_face_embedding(external_url)
-                        if embedding is not None:
-                            import json
-                            char.face_embedding = json.dumps(embedding)
-                            ctx.session.add(char)
-                            await ctx.session.flush()
-                            logger.info("Computed face embedding for character %s", char.name)
-                    except Exception as e:
-                        logger.warning("Failed to compute face embedding for %s: %s", char.name, e)
-
                 current_version = await self.version_service.create_version(
-                    ctx.session,
-                    "character",
-                    char.id,
-                    character_snapshot(char),
-                    run_id=ctx.run.id,
-                    trigger="generation",
+                    ctx.session, "character", char.id, character_snapshot(char),
+                    run_id=ctx.run.id, trigger="generation",
                 )
                 await ctx.ws.send_event(
                     ctx.project.id,
@@ -243,15 +228,13 @@ class RenderAgent(BaseAgent):
         if ctx.target_ids and ctx.target_ids.shot_ids:
             query = query.where(Shot.id.in_(ctx.target_ids.shot_ids))
         res = await ctx.session.execute(query)
-        shots = res.scalars().all()
+        shots = list(res.scalars().all())
 
         if not shots:
             await self.send_message(ctx, "所有分镜已有首帧图片。")
             return 0
 
         total = len(shots)
-        updated_count = 0
-        failed_count = 0
         style = ctx.project.style or ""
 
         # Thinking: planning phase — starting shot rendering
@@ -269,84 +252,63 @@ class RenderAgent(BaseAgent):
             is_loading=True,
         )
 
-        for i, shot in enumerate(shots):
+        # ── 阶段1：预取所有 shot 数据（需要 session） ──
+        # (shot, chars, ref_img, prompt)
+        prep_list: list[tuple[Shot, list[Character], bytes | None, str]] = []
+        for shot in shots:
+            characters = await resolve_shot_bound_approved_characters(ctx.session, shot)
+            char_image_urls = [c.image_url for c in characters if c.image_url]
+
+            reference_image_bytes: bytes | None = None
+            if char_image_urls:
+                try:
+                    reference_image_bytes = (
+                        await self.image_composer.compose_character_reference_image(char_image_urls)
+                    )
+                except Exception as exc:
+                    reference_image_bytes = None
+                    logger.warning("Failed to compose character reference image: %s", exc)
+
+            image_prompt = await self._build_shot_prompt(shot, characters, style=style, session=ctx.session)
+            await self.version_service.auto_snapshot_shot(
+                ctx.session, shot, run_id=ctx.run.id, trigger="generation",
+            )
+            prep_list.append((shot, characters, reference_image_bytes, image_prompt))
+        await ctx.session.flush()
+
+        # ── 阶段2：并行调用外部 API（不使用 session） ──
+        max_gen = ctx.settings.max_concurrent_generations
+
+        async def _generate_one(prep: tuple[Shot, list[Character], bytes | None, str]) -> str:
+            _, _, ref_bytes, prompt = prep
+            return await self.generate_and_cache_image(
+                ctx, prompt=prompt, image_bytes=ref_bytes, timeout_s=480.0,
+            )
+
+        coros = [_generate_one(p) for p in prep_list]
+        results = await run_bounded(coros, max_gen)
+
+        # ── 阶段3：顺序写 DB + 发送事件 ──
+        updated_count = 0
+        failed_count = 0
+        for i, (prep, result) in enumerate(zip(prep_list, results)):
+            shot = prep[0]
             try:
+                if isinstance(result, BaseException):
+                    raise result
+
                 await self.send_progress_batch(
-                    ctx, total=total, current=i, message=f"   正在绘制分镜 {i + 1}/{total}..."
+                    ctx, total=total, current=i,
+                    message=f"   正在保存分镜 {i + 1}/{total}...",
                 )
 
-                characters = await resolve_shot_bound_approved_characters(ctx.session, shot)
-                char_image_urls = [c.image_url for c in characters if c.image_url]
-
-                # Thinking: reasoning for each shot
-                n_refs = len(char_image_urls)
-                await self.send_thinking(
-                    ctx,
-                    phase="reasoning",
-                    content=f"分镜 #{shot.order} 使用了 {n_refs} 个角色参考图",
-                )
-
-                reference_image_bytes: bytes | None = None
-
-                if char_image_urls:
-                    try:
-                        reference_image_bytes = (
-                            await self.image_composer.compose_character_reference_image(
-                                char_image_urls
-                            )
-                        )
-                        logger.info(
-                            "Composed character reference image with %d characters for shot %d",
-                            len(char_image_urls),
-                            shot.id,
-                        )
-                    except Exception as exc:
-                        reference_image_bytes = None
-                        logger.warning("Failed to compose character reference image: %s", exc)
-                else:
-                    logger.info(
-                        "No character images available for shot %d; using text-to-image", shot.id
-                    )
-
-                image_prompt = await self._build_shot_prompt(shot, characters, style=style, session=ctx.session)
-                version = await self.version_service.auto_snapshot_shot(
-                    ctx.session,
-                    shot,
-                    run_id=ctx.run.id,
-                    trigger="generation",
-                )
-                if version is not None:
-                    await ctx.session.flush()
-                    await ctx.ws.send_event(
-                        ctx.project.id,
-                        {
-                            "type": "version_created",
-                            "data": {
-                                "entity_type": "shot",
-                                "entity_id": shot.id,
-                                "version": version.version,
-                                "trigger": version.trigger,
-                            },
-                        },
-                    )
-
-                image_url = await self.generate_and_cache_image(
-                    ctx,
-                    prompt=image_prompt,
-                    image_bytes=reference_image_bytes,
-                    timeout_s=480.0,
-                )
-
-                shot.image_url = image_url
+                shot.image_url = result
                 ctx.session.add(shot)
                 await ctx.session.flush()
+
                 current_version = await self.version_service.create_version(
-                    ctx.session,
-                    "shot",
-                    shot.id,
-                    shot_snapshot(shot),
-                    run_id=ctx.run.id,
-                    trigger="generation",
+                    ctx.session, "shot", shot.id, shot_snapshot(shot),
+                    run_id=ctx.run.id, trigger="generation",
                 )
                 await ctx.ws.send_event(
                     ctx.project.id,
@@ -362,14 +324,9 @@ class RenderAgent(BaseAgent):
                 )
                 await self.send_shot_event(ctx, shot, "shot_updated")
                 updated_count += 1
-
-                if i < total - 1:
-                    await asyncio.sleep(1.0)
-
             except Exception as e:
                 failed_count += 1
                 await self.send_message(ctx, f"镜头 {shot.order} 首帧图片生成失败: {str(e)[:100]}")
-                await asyncio.sleep(2.0)
 
         await ctx.session.commit()
 
@@ -377,7 +334,6 @@ class RenderAgent(BaseAgent):
             f"为{updated_count}个分镜生成了首帧图片" if updated_count > 0 else "分镜图片生成失败"
         )
         if updated_count > 0:
-            shots[0].description[:20] if shots and shots[0].description else ""
             msg = f"已为 {updated_count} 个分镜生成首帧图片，接下来将生成视频。"
             if failed_count > 0:
                 msg += f"（{failed_count} 个失败）"

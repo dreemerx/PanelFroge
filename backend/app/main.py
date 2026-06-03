@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import shutil
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -17,6 +19,28 @@ from app.exceptions import AppException
 from app.ws.manager import ws_manager
 
 logger = logging.getLogger(__name__)
+
+# 确保 ffmpeg 在 PATH 中（Windows 上 winget 安装的 ffmpeg 可能不在 PATH 里）
+if shutil.which("ffmpeg") is None:
+    _ffmpeg_search_roots = [
+        Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Packages",
+        Path("C:/ffmpeg"),
+        Path("C:/Program Files/ffmpeg"),
+    ]
+    _found = False
+    for root in _ffmpeg_search_roots:
+        if _found:
+            break
+        if not root.is_dir():
+            continue
+        # 递归搜索 ffmpeg.exe（winget 的目录结构是 Gyan.FFmpeg_.../ffmpeg-x.x.x/bin/ffmpeg.exe）
+        for exe_path in root.rglob("ffmpeg.exe"):
+            bin_dir = exe_path.parent
+            os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ.get("PATH", "")
+            logger.info("Added FFmpeg to PATH: %s", bin_dir)
+            print(f"[startup] Added FFmpeg to PATH: {bin_dir}", flush=True)
+            _found = True
+            break
 
 # 静态文件目录
 STATIC_DIR = Path(__file__).parent / "static"

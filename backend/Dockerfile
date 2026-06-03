@@ -1,9 +1,10 @@
-FROM python:3.11-slim
+FROM docker.1ms.run/python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
-    UV_PROJECT_ENVIRONMENT=/app/.venv
+    UV_PROJECT_ENVIRONMENT=/app/.venv \
+    UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
 
@@ -11,11 +12,13 @@ WORKDIR /app
 # - ffmpeg for video processing
 # - libgl/libglib for opencv-python-headless
 # - g++ for native extensions required by insightface during uv sync
-RUN apt-get update && \
+RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; \
+    sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list 2>/dev/null; \
+    apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg libgl1 libglib2.0-0 g++ && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple uv
 
 # Install deps first for better layer caching
 COPY pyproject.toml uv.lock ./
