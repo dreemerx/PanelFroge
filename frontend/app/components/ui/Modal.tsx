@@ -1,6 +1,8 @@
+// 通用弹窗组件，支持标题、内容和操作按钮，具备焦点陷阱和 Esc 关闭
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./Button";
 
+// Modal 组件的属性接口
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -9,6 +11,7 @@ interface ModalProps {
   actions?: ReactNode;
 }
 
+// 通用弹窗组件：焦点管理、键盘事件处理和无障碍支持
 export function Modal({ isOpen, onClose, title, children, actions }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);

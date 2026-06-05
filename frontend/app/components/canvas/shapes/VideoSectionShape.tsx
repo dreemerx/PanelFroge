@@ -1,3 +1,4 @@
+// 视频输出区域 shape 工具类，展示最终视频和下载功能
 import {
   HTMLContainer,
   Rectangle2d,
@@ -22,6 +23,7 @@ const PLACEHOLDER_ICON = (
   </svg>
 );
 
+// 视频输出区域 shape 工具类
 export class VideoSectionShapeUtil extends ShapeUtil<VideoSectionShape> {
   static override type = "video-section" as const;
 

@@ -1,3 +1,5 @@
+"""项目及关联实体（角色、镜头、AgentRun 等）的请求/响应 Schema。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -12,7 +14,9 @@ VideoProviderKey = Literal["openai", "doubao", "fake"]
 
 
 class ProjectProviderEntry(BaseModel):
+    """项目级 Provider 解析结果条目。"""
     class Capabilities(BaseModel):
+        """Provider 能力描述。"""
         generate: bool | None = None
         stream: bool | None = None
 
@@ -27,18 +31,21 @@ class ProjectProviderEntry(BaseModel):
 
 
 class ProjectProviderSettingsRead(BaseModel):
+    """项目 Provider 设置读取模型（文本/图像/视频三条链路）。"""
     text: ProjectProviderEntry
     image: ProjectProviderEntry
     video: ProjectProviderEntry
 
 
 class ProviderResolution(BaseModel):
+    """Provider 解析完整结果，包含有效性判断和各模态条目。"""
     valid: bool
     text: ProjectProviderEntry
     image: ProjectProviderEntry
     video: ProjectProviderEntry
 
     def as_project_provider_settings(self) -> ProjectProviderSettingsRead:
+        """转换为项目 Provider 设置读取模型。"""
         return ProjectProviderSettingsRead(
             text=self.text,
             image=self.image,
@@ -46,6 +53,7 @@ class ProviderResolution(BaseModel):
         )
 
     def as_error_details(self) -> dict[str, object]:
+        """转换为错误详情字典，用于异常响应。"""
         return {
             "valid": self.valid,
             "modalities": self.as_project_provider_settings().model_dump(),
@@ -53,12 +61,14 @@ class ProviderResolution(BaseModel):
 
 
 class StoryOutlineAct(BaseModel):
+    """故事大纲中的单个幕（Act）。"""
     act: int
     title: str
     summary: str
 
 
 class StoryOutlineRead(BaseModel):
+    """故事大纲读取模型。"""
     logline: str = ""
     genre: list[str] = Field(default_factory=list)
     themes: list[str] = Field(default_factory=list)
@@ -69,6 +79,7 @@ class StoryOutlineRead(BaseModel):
 
 
 class StoryOutlineUpdate(BaseModel):
+    """故事大纲更新模型。"""
     logline: str | None = None
     genre: list[str] | None = None
     themes: list[str] | None = None
@@ -82,6 +93,7 @@ class StoryOutlineUpdate(BaseModel):
 
 
 class ProjectCreate(BaseModel):
+    """创建项目的请求模型。"""
     title: str = Field(min_length=1)
     story: str | None = None
     style: str | None = None
@@ -100,6 +112,7 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
+    """更新项目的请求模型。"""
     title: str | None = None
     story: str | None = None
     style: str | None = None
@@ -118,10 +131,12 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectBatchDeleteRequest(BaseModel):
+    """批量删除项目的请求模型。"""
     ids: list[int] = Field(min_length=1)
 
 
 class ProjectRead(BaseModel):
+    """项目完整读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -148,11 +163,13 @@ class ProjectRead(BaseModel):
 
 
 class ProjectListRead(BaseModel):
+    """项目列表读取模型。"""
     items: list[ProjectRead]
     total: int
 
 
 class CharacterRead(BaseModel):
+    """角色读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -189,6 +206,7 @@ class CharacterRead(BaseModel):
 
 
 class ShotRead(BaseModel):
+    """镜头读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -231,6 +249,7 @@ class ShotRead(BaseModel):
 
 
 class ShotUpdate(BaseModel):
+    """更新镜头的请求模型。"""
     order: int | None = Field(default=None, ge=1)
     description: str | None = None
     prompt: str | None = None
@@ -249,6 +268,7 @@ class ShotUpdate(BaseModel):
 
 
 class CharacterUpdate(BaseModel):
+    """更新角色的请求模型。"""
     name: str | None = Field(default=None, min_length=1)
     description: str | None = None
     image_url: str | None = None
@@ -257,22 +277,26 @@ class CharacterUpdate(BaseModel):
 
 
 class RegenerateRequest(BaseModel):
+    """重新生成图像或视频的请求模型。"""
     type: Literal["image", "video"]
     description: str | None = None
     image_url: str | None = None
 
 
 class GenerateRequest(BaseModel):
+    """触发项目生成的请求模型。"""
     seed: int | None = None
     notes: str | None = None
     auto_mode: bool = False
 
 
 class ResumeRequest(BaseModel):
+    """恢复已中断任务的请求模型。"""
     run_id: int
 
 
 class AgentRunRead(BaseModel):
+    """Agent 运行记录读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -290,12 +314,14 @@ class AgentRunRead(BaseModel):
 
 
 class RecoveryStageRead(BaseModel):
+    """恢复流程中单个阶段的状态。"""
     name: str
     status: Literal["completed", "current", "pending", "blocked"]
     artifact_count: int = 0
 
 
 class RecoverySummaryRead(BaseModel):
+    """恢复流程摘要，包含阶段历史和可恢复性判断。"""
     project_id: int
     run_id: int
     thread_id: str
@@ -307,6 +333,7 @@ class RecoverySummaryRead(BaseModel):
 
 
 class RecoveryControlRead(BaseModel):
+    """恢复控制面板读取模型，返回给前端用于决策。"""
     state: Literal["active", "recoverable"]
     detail: str
     available_actions: list[Literal["resume", "cancel"]] = Field(
@@ -318,6 +345,7 @@ class RecoveryControlRead(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
+    """用户反馈请求模型。"""
     content: str = Field(min_length=1)
     run_id: int | None = None
     feedback_type: str | None = None
@@ -326,6 +354,7 @@ class FeedbackRequest(BaseModel):
 
 
 class MessageRead(BaseModel):
+    """消息记录读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -341,6 +370,7 @@ class MessageRead(BaseModel):
 
 
 class AssetCreate(BaseModel):
+    """创建资产的请求模型。"""
     name: str = Field(min_length=1, max_length=100)
     asset_type: Literal["character", "scene"]
     description: str | None = None
@@ -351,10 +381,12 @@ class AssetCreate(BaseModel):
 
 
 class UseAssetInProjectRequest(BaseModel):
+    """将资产导入项目的请求模型。"""
     project_id: int
 
 
 class AssetRead(BaseModel):
+    """资产读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -370,6 +402,7 @@ class AssetRead(BaseModel):
 
 
 class AssetListRead(BaseModel):
+    """资产列表读取模型。"""
     items: list[AssetRead]
     total: int
 

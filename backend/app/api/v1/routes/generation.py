@@ -1,3 +1,5 @@
+"""生成流程 API 路由，包含项目生成、恢复、取消及反馈提交。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -38,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 async def _start_project_task(project_id: int, coro: Coroutine[object, object, None]) -> None:
+    """启动后台项目任务并注册到任务管理器。"""
     task = asyncio.create_task(coro)
 
     def _log_task_result(done_task: asyncio.Task[None]) -> None:
@@ -53,6 +56,7 @@ async def _start_project_task(project_id: int, coro: Coroutine[object, object, N
 
 
 def _agent_run_thread_id(run: AgentRun) -> str:
+    """根据 AgentRun 生成线程 ID。"""
     return f"agent-run-{run.id}" if run.id is not None else "agent-run-pending"
 
 
@@ -63,6 +67,7 @@ def _require_run_id(run: AgentRun) -> int:
 async def _latest_run_for_project(
     session: AsyncSession, project_id: int, statuses: tuple[str, ...]
 ) -> AgentRun | None:
+    """查询项目最近一次指定状态的 AgentRun。"""
     project_id_col = cast(InstrumentedAttribute[int], cast(object, AgentRun.project_id))
     status_col = cast(InstrumentedAttribute[str], cast(object, AgentRun.status))
     created_at_col = cast(InstrumentedAttribute[datetime], cast(object, AgentRun.created_at))
@@ -87,6 +92,7 @@ async def generate_project(
     settings: Settings = SettingsDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """触发项目全流程生成（编排器模式），返回 AgentRun。"""
     project = await get_or_404(session, Project, project_id)
 
     active_run = await _latest_run_for_project(session, project_id, ("queued", "running"))
@@ -180,6 +186,7 @@ async def resume_project_run(
     settings: Settings = SettingsDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """恢复已失败或已取消的项目生成任务。"""
     await get_or_404(session, Project, project_id)
 
     run = await get_or_404(session, AgentRun, payload.run_id)
@@ -218,7 +225,7 @@ async def cancel_project_run(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
-    """取消项目的当前运行任务"""
+    """取消项目当前正在运行的生成任务。"""
     await get_or_404(session, Project, project_id)
 
     # 先取消实际的后台任务
@@ -269,6 +276,7 @@ async def feedback_project(
     settings: Settings = SettingsDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """提交用户反馈，触发基于反馈的重新生成流程。"""
     project = await get_or_404(session, Project, project_id)
 
     active_run = await _latest_run_for_project(session, project_id, ("queued", "running"))

@@ -1,3 +1,4 @@
+// 项目列表页，展示所有项目并支持单选/批量删除操作
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import { cleanupDeletedProjectCaches } from "~/features/projects/deleteProject";
 import { useThemeStore } from "~/stores/themeStore";
 import { useSettingsStore } from "~/stores/settingsStore";
 
+// 项目列表页组件：显示所有项目，支持全选、批量删除和主题切换
 export function ProjectsPage() {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<number[] | null>(null);

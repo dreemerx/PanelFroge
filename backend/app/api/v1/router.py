@@ -1,3 +1,5 @@
+"""API v1 路由注册，汇总所有子路由并挂载到统一前缀。"""
+
 from fastapi import APIRouter
 
 from app.api.v1.routes.assets import router as assets_router

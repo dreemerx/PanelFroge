@@ -1,5 +1,7 @@
+// 消息输入组件，提供文本输入框和发送按钮
 import { Button } from "~/components/ui/Button";
 
+// MessageInput 组件的属性接口
 interface MessageInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -8,6 +10,7 @@ interface MessageInputProps {
   placeholder?: string;
 }
 
+// 消息输入组件：支持 Enter 发送、Shift+Enter 换行
 export function MessageInput({
   value,
   onChange,

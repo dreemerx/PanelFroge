@@ -1,3 +1,5 @@
+"""LLM 服务 — Claude (Anthropic Messages API) 封装，支持工具调用和流式输出。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -10,6 +12,7 @@ from app.services.text_capabilities import TextProviderCapability
 
 @dataclass(slots=True)
 class ToolCall:
+    """工具调用请求。"""
     id: str
     name: str
     input: dict[str, Any]
@@ -17,6 +20,7 @@ class ToolCall:
 
 @dataclass(slots=True)
 class LLMResponse:
+    """LLM 响应结果。"""
     text: str
     tool_calls: list[ToolCall]
     raw: Any
@@ -131,6 +135,7 @@ class LLMService:
             raise last_exc
 
     async def probe(self) -> TextProviderCapability:
+        """探测 LLM 服务的可用性（生成能力和流式能力）。"""
         probe_messages = [{"role": "user", "content": "ping"}]
 
         try:
@@ -170,6 +175,20 @@ class LLMService:
         temperature: float | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
+        """调用 LLM 生成文本（非流式）。
+
+        Args:
+            messages: 消息列表
+            system: 系统提示
+            tools: 工具定义列表
+            tool_choice: 工具选择策略
+            model: 模型名称
+            max_tokens: 最大 token 数
+            temperature: 温度参数
+
+        Returns:
+            LLMResponse 对象
+        """
         client = self._get_client()
 
         payload: dict[str, Any] = {

@@ -1,3 +1,4 @@
+// 消息列表组件，渲染 AI 对话中的各类消息（思考、手写机效果、折叠等）
 import { useCallback, useRef, useEffect, useState } from "react";
 import type { AgentMessage } from "~/types";
 import { AGENT_NAME_MAP } from "~/types";
@@ -13,10 +14,12 @@ import {
   VideoCameraIcon,
 } from "@heroicons/react/24/outline";
 
+// MessageList 组件的属性接口
 interface MessageListProps {
   messages: AgentMessage[];
 }
 
+// 各 agent 的文本颜色映射
 const agentColors: Record<string, string> = {
   plan: "text-primary",
   render: "text-info",
@@ -27,6 +30,7 @@ const agentColors: Record<string, string> = {
   audio: "text-secondary",
 };
 
+// 各 agent 的图标映射
 const agentIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   plan: LightBulbIcon,
   render: PaintBrushIcon,
@@ -37,10 +41,13 @@ const agentIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElemen
   audio: HandRaisedIcon,
 };
 
+// 触发打字机效果的最小内容长度
 const MIN_TYPEWRITER_LENGTH = 50;
 
+// agent 标识到中文名称的映射
 const agentNameMap = AGENT_NAME_MAP;
 
+// 思考阶段的英文标签映射
 const phaseLabelMap: Record<string, string> = {
   reasoning: "REASONING",
   decision: "DECISION",
@@ -48,6 +55,7 @@ const phaseLabelMap: Record<string, string> = {
   reviewing: "REVIEWING",
 };
 
+// 思考阶段的颜色映射
 const phaseColorMap: Record<string, string> = {
   reasoning: "badge-info",
   decision: "badge-warning",
@@ -55,6 +63,7 @@ const phaseColorMap: Record<string, string> = {
   reviewing: "badge-accent",
 };
 
+// 思考消息组件：展示 AI 的思考过程，支持展开/收起
 function ThinkingMessage({ msg }: { msg: AgentMessage }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const phaseLabel = msg.phase ? phaseLabelMap[msg.phase] || msg.phase.toUpperCase() : "";
@@ -117,6 +126,7 @@ function ThinkingMessage({ msg }: { msg: AgentMessage }) {
   );
 }
 
+// 判断消息是否应被过滤不显示
 function shouldFilterOut(msg: AgentMessage): boolean {
   if (msg.role === "info" && msg.agent === "system") return true;
   if (msg.role === "separator") return false;
@@ -126,6 +136,7 @@ function shouldFilterOut(msg: AgentMessage): boolean {
   return false;
 }
 
+// 消息列表组件：渲染对话消息，支持打字机效果、折叠和思考展示
 export function MessageList({ messages }: MessageListProps) {
   const completedMessagesRef = useRef<Set<string>>(new Set());
   const messageFirstSeenRef = useRef<Map<string, number>>(new Map());

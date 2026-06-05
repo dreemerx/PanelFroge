@@ -1,7 +1,10 @@
+// 画布事件总线定义，用于 canvas 组件间的解耦通信
 import type { ShotUpdatePayload } from "~/types";
 
+// 画布 shape 操作的名称类型
 export type ShapeActionName = "add-to-assets" | "approve" | "edit" | "history" | "regenerate";
 
+// shape 操作的载荷数据结构
 export interface ShapeActionPayload {
   shapeId: string;
   action: ShapeActionName;
@@ -12,7 +15,7 @@ export interface ShapeActionPayload {
   feedbackContent?: string;
 }
 
-// 事件类型定义 — 只保留仍在使用的事件
+// 画布事件类型映射
 export interface CanvasEvents {
   "preview-image": { src: string; alt: string };
   "preview-video": { src: string; title: string };
@@ -23,7 +26,7 @@ export interface CanvasEvents {
 type EventCallback<T> = (data: T) => void;
 type AnyEventCallback = (data: CanvasEvents[keyof CanvasEvents]) => void;
 
-// 事件总线单例
+// 画布事件总线单例类，支持事件的订阅、发布和取消
 class CanvasEventBus {
   private listeners: Partial<Record<keyof CanvasEvents, Set<AnyEventCallback>>> = {};
 

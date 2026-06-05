@@ -1,11 +1,14 @@
+// 配置项分组工具，将配置项按类型（基础/数据库/文本/图像/视频）归类
 import type { ConfigItem } from "~/types";
 
+// 配置分组结构
 export interface ConfigSection {
 	key: string;
 	title: string;
 	items: ConfigItem[];
 }
 
+// 将扁平配置列表按 key 前缀分组为 ConfigSection 数组
 export function groupConfigs(configs: ConfigItem[]): ConfigSection[] {
 	const groups: Record<string, ConfigItem[]> = {
 		basic: [],

@@ -1,3 +1,5 @@
+"""WebSocket 连接管理器 — 管理项目维度的连接池和事件广播"""
+
 from __future__ import annotations
 
 import asyncio
@@ -69,16 +71,20 @@ _EVENT_DATA_MODELS: dict[str, type[Any]] = {
 
 
 class ConnectionManager:
+    """WebSocket 连接管理器，按 project_id 维护连接池并广播事件"""
+
     def __init__(self) -> None:
         self._conns: dict[int, set[WebSocket]] = defaultdict(set)
         self._lock = asyncio.Lock()
 
     async def connect(self, project_id: int, websocket: WebSocket) -> None:
+        """接受 WebSocket 连接并加入项目连接池"""
         await websocket.accept()
         async with self._lock:
             self._conns[project_id].add(websocket)
 
     async def disconnect(self, project_id: int, websocket: WebSocket) -> None:
+        """从项目连接池中移除 WebSocket 连接"""
         async with self._lock:
             if project_id in self._conns:
                 self._conns[project_id].discard(websocket)
@@ -86,6 +92,7 @@ class ConnectionManager:
                     self._conns.pop(project_id, None)
 
     async def send_event(self, project_id: int, event: dict[str, Any] | WsEvent) -> None:
+        """向指定项目的所有连接广播事件，自动校验事件数据模型"""
         if isinstance(event, dict):
             event = WsEvent.model_validate(event)
 

@@ -1,3 +1,5 @@
+"""分镜角色绑定服务 — 解析分镜关联的已审批角色列表。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -14,6 +16,15 @@ async def resolve_shot_bound_approved_characters(
     session: AsyncSession,
     shot: Shot,
 ) -> list[Character]:
+    """解析分镜关联的已审批角色列表（优先使用 approved_character_ids）。
+
+    Args:
+        session: 数据库会话
+        shot: 分镜对象
+
+    Returns:
+        按 character_ids 顺序排列的角色列表
+    """
     character_ids: Sequence[int] = shot.approved_character_ids or shot.character_ids
     if not character_ids:
         return []

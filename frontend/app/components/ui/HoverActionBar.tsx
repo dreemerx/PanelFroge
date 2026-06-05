@@ -1,11 +1,14 @@
+// 悬浮操作栏组件，在鼠标悬停时显示操作按钮组
 import { useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 
+// 操作按钮变体类型
 type ActionVariant = "primary" | "secondary" | "accent" | "ghost" | "error";
 
 // 支持 heroicons 风格的图标组件
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
+// 操作项接口，定义按钮的图标、标签和点击行为
 export interface ActionItem {
   icon: IconComponent;
   label: string;
@@ -14,12 +17,14 @@ export interface ActionItem {
   loading?: boolean;
 }
 
+// HoverActionBar 组件的属性接口
 interface HoverActionBarProps {
   actions: ActionItem[];
   children: React.ReactNode;
   className?: string;
 }
 
+// 悬浮操作栏组件：包裹子元素，悬停时显示操作按钮
 export function HoverActionBar({
   actions,
   children,

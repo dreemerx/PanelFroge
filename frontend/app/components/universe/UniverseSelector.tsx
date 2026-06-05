@@ -1,13 +1,16 @@
+// 宇宙选择器下拉组件，用于新建项目时选择关联的 IP 宇宙
 import { useState, useEffect } from "react";
 import { universesApi } from "~/services/api";
 import type { Universe } from "~/types";
 
+// UniverseSelector 组件的属性接口
 interface UniverseSelectorProps {
 	value: number | null;
 	onChange: (universeId: number | null) => void;
 	className?: string;
 }
 
+// 宇宙选择器组件：下拉列表选择 IP 宇宙，显示章节数和角色数
 export function UniverseSelector({
 	value,
 	onChange,

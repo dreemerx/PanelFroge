@@ -1,17 +1,21 @@
+// 风格模板网格组件，按分类展示所有可用风格并支持选择和创建
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { styleTemplatesApi } from "~/services/api";
 import { StyleTemplateCard } from "./StyleTemplateCard";
 import type { StyleTemplate } from "~/types";
 
+// 分类过滤类型
 type CategoryFilter = "all" | "builtin" | "custom";
 
+// StyleTemplateGrid 组件的属性接口
 interface StyleTemplateGridProps {
   selectedSlug: string;
   onSelect: (slug: string) => void;
   onCreateNew?: () => void;
 }
 
+// 风格模板网格组件：分类浏览、选择风格，支持创建自定义风格
 export function StyleTemplateGrid({
   selectedSlug,
   onSelect,

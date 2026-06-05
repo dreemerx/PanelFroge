@@ -1,12 +1,15 @@
+// Toast 通知和 API 错误类型定义
 // Toast 类型定义
 export type ToastType = "success" | "error" | "warning" | "info";
 
+// Toast 操作按钮，点击后执行的回调
 export interface ToastAction {
   label: string;
   onClick: () => void;
   variant?: "primary" | "secondary";
 }
 
+// Toast 通知数据结构
 export interface Toast {
   id: string;
   type: ToastType;

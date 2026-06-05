@@ -1,3 +1,4 @@
+// IP 宇宙列表页，展示和管理跨项目共享的世界观设定
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { universesApi } from "~/services/api";
@@ -11,6 +12,7 @@ import { toast } from "~/utils/toast";
 import type { Universe } from "~/types";
 import { Link } from "react-router-dom";
 
+// IP 宇宙列表页组件：浏览所有宇宙，支持创建新宇宙
 export function UniversesPage() {
 	const queryClient = useQueryClient();
 	const [showCreate, setShowCreate] = useState(false);

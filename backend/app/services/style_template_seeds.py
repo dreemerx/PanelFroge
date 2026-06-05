@@ -1,8 +1,4 @@
-"""Built-in style template seed data.
-
-Defines the 11 existing styles from RenderAgent._style_descriptor plus 3 new ones
-(guofeng-manga, cyberpunk, fairy-tale) as builtin templates.
-"""
+"""内置风格模板种子数据 — 定义 14 种内置风格模板（日系动漫、国风漫画、赛博朋克等）。"""
 
 from __future__ import annotations
 
@@ -148,7 +144,7 @@ BUILTIN_STYLE_TEMPLATES: list[dict] = [
 
 
 async def ensure_builtin_templates(session: AsyncSession) -> None:
-    """Insert builtin style templates on first run (ON CONFLICT DO NOTHING via slug check)."""
+    """确保内置风格模板已入库（首次运行时插入，按 slug 去重）。"""
     inserted = 0
     for seed in BUILTIN_STYLE_TEMPLATES:
         slug = seed["slug"]

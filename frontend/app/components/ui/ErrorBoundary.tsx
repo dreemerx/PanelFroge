@@ -1,16 +1,20 @@
+// 错误边界组件，捕获子组件渲染错误并展示友好的错误页面
 import { Component, type ReactNode } from "react";
 import { Button } from "./Button";
 
+// ErrorBoundary 组件的属性接口
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
+// ErrorBoundary 的状态接口
 interface State {
   hasError: boolean;
   error: Error | null;
 }
 
+// 错误边界类组件：捕获渲染异常，展示错误详情和恢复选项
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

@@ -1,3 +1,5 @@
+"""镜头管理 API 路由，包含镜头更新、审批、重新生成和删除。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -38,6 +40,7 @@ def _shot_read(shot: Shot) -> dict[str, Any]:
 
 
 def _validate_shot_approval_ready(shot: Shot) -> None:
+    """校验镜头是否满足审批前置条件（结构化意图、时长、运镜等字段完整）。"""
     missing = []
     if not shot.description:
         missing.append("description")
@@ -62,6 +65,7 @@ def _validate_shot_approval_ready(shot: Shot) -> None:
 
 
 async def _sync_shot_character_bindings(session: AsyncSession, shot: Shot) -> None:
+    """同步镜头的角色绑定关系（先删后增）。"""
     shot_id_col = cast(InstrumentedAttribute[int], cast(object, ShotCharacterBinding.shot_id))
     await session.execute(delete(ShotCharacterBinding).where(shot_id_col == shot.id))
     shot_id = shot.id
@@ -79,6 +83,7 @@ async def _sync_shot_character_bindings(session: AsyncSession, shot: Shot) -> No
 async def _validate_shot_character_ids(
     session: AsyncSession, project_id: int, character_ids: list[int]
 ) -> None:
+    """验证角色 ID 列表是否都属于当前项目。"""
     if not character_ids:
         return
 
@@ -107,6 +112,7 @@ async def update_shot(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """更新镜头信息，支持角色绑定变更。"""
     shot = await get_or_404(session, Shot, shot_id)
 
     project_id = shot.project_id
@@ -142,6 +148,7 @@ async def approve_shot(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """审批通过镜头，冻结当前版本为审批快照。"""
     shot = await get_or_404(session, Shot, shot_id)
 
     _validate_shot_approval_ready(shot)
@@ -169,6 +176,7 @@ async def regenerate_shot(
     settings: Settings = SettingsDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """重新生成镜头的图像或视频。"""
     if payload is None:
         payload = RegenerateRequest(type="video")
 
@@ -280,6 +288,7 @@ async def delete_shot(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """删除镜头及其关联文件，同时清除项目最终视频。"""
     shot = await get_or_404(session, Shot, shot_id)
 
     project_id = shot.project_id

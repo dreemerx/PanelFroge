@@ -29,6 +29,7 @@ _export_service = ExportService()
 
 
 def _get_redis_export_key(export_id: str) -> str:
+    """生成导出状态在 Redis 中的键名。"""
     return f"panelforge:export:{export_id}"
 
 
@@ -64,7 +65,7 @@ async def _run_export_task(
     include_character_info: bool,
     ws: ConnectionManager,
 ) -> None:
-    """后台导出任务"""
+    """后台执行导出任务，完成后通过 WebSocket 通知前端。"""
     from app.db.session import async_session_maker
 
     try:

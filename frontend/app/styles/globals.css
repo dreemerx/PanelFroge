@@ -143,9 +143,6 @@
       oklch(var(--b1));
   }
 
-  /* Legacy aliases */
-  .forge-bg { @apply panel-bg; }
-  .forge-bg-hero { @apply panel-bg-hero; }
 
   /* Gradient Title */
   .panel-title {
@@ -155,8 +152,6 @@
     background-clip: text;
   }
 
-  /* Legacy alias */
-  .forge-title { @apply panel-title; }
 
   /* Glow Pulse */
   .panel-glow {
@@ -168,8 +163,6 @@
     100% { filter: drop-shadow(0 0 20px oklch(var(--p) / 0.25)); }
   }
 
-  /* Legacy alias */
-  .forge-glow { @apply panel-glow; }
 
   /* Divider */
   .panel-divider {
@@ -177,8 +170,6 @@
     background: linear-gradient(90deg, transparent, oklch(var(--p) / 0.25), transparent);
   }
 
-  /* Legacy alias */
-  .forge-divider { @apply panel-divider; }
 
   /* Chat Bubbles */
   .speech-bubble {
@@ -217,23 +208,11 @@
     padding-bottom: 4px;
   }
 
-  /* Legacy alias */
-  .underline-sketch { @apply underline-accent; }
 }
 
 /* ========== Animations ========== */
 
 @layer utilities {
-  .animate-wiggle {
-    animation: wiggle 0.3s ease-in-out infinite;
-    will-change: transform;
-  }
-
-  @keyframes wiggle {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(1deg); }
-  }
-
   .animate-bounce-in {
     animation: bounce-in 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform, opacity;
@@ -263,16 +242,6 @@
   @keyframes doodle-pop {
     0% { transform: scale(0.97) translateY(6px); opacity: 0; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
-  }
-
-  .animate-bounce-x {
-    animation: bounce-x 1s infinite;
-    will-change: transform;
-  }
-
-  @keyframes bounce-x {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(-6px); }
   }
 
   .animate-fade-in {
@@ -305,38 +274,6 @@
     100% { opacity: 1; transform: translateX(0); }
   }
 
-  .animate-shimmer {
-    animation: shimmer 2s infinite;
-    will-change: opacity;
-  }
-
-  @keyframes shimmer {
-    0% { opacity: 0; }
-    50% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-
-  .animate-success-celebration {
-    animation: success-celebration 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-  }
-
-  @keyframes success-celebration {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.06); }
-    50% { transform: scale(0.97); }
-    100% { transform: scale(1); }
-  }
-
-  .animate-pulse-highlight {
-    animation: pulse-highlight 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-  }
-
-  @keyframes pulse-highlight {
-    0%, 100% { box-shadow: 0 0 0 0 oklch(var(--p) / 0); }
-    50% { box-shadow: 0 0 0 8px oklch(var(--p) / 0.2); }
-  }
-
   .touch-target {
     @apply min-w-[44px] min-h-[44px];
   }
@@ -344,13 +281,10 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .animate-wiggle,
   .animate-bounce-in,
-  .animate-bounce-x,
   .animate-fade-in,
   .animate-slide-in-left,
-  .animate-slide-in-right,
-  .animate-shimmer {
+  .animate-slide-in-right {
     animation: none;
   }
 

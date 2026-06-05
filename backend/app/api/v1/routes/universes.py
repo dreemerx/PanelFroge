@@ -26,6 +26,7 @@ router = APIRouter()
 
 
 def _universe_read(universe: Universe, projects_count: int = 0, shared_characters_count: int = 0) -> dict:
+    """将 Universe ORM 对象转换为读取 Schema 字典。"""
     return UniverseRead(
         id=universe.id,
         name=universe.name,
@@ -42,6 +43,7 @@ def _universe_read(universe: Universe, projects_count: int = 0, shared_character
 
 
 def _shared_character_read(sc: SharedCharacter) -> dict:
+    """将 SharedCharacter ORM 对象转换为读取 Schema 字典。"""
     return SharedCharacterRead(
         id=sc.id,
         universe_id=sc.universe_id,
@@ -71,6 +73,7 @@ async def create_universe(
     payload: UniverseCreate,
     session: AsyncSession = SessionDep,
 ):
+    """创建新的 IP 宇宙。"""
     svc = UniverseService(session)
     universe = await svc.create_universe(
         name=payload.name,
@@ -86,6 +89,7 @@ async def create_universe(
 async def list_universes(
     session: AsyncSession = SessionDep,
 ):
+    """列出所有 IP 宇宙，附带项目数和共享角色数统计。"""
     svc = UniverseService(session)
     universes = await svc.list_universes()
 
@@ -118,6 +122,7 @@ async def get_universe(
     universe_id: int,
     session: AsyncSession = SessionDep,
 ):
+    """获取 IP 宇宙详情，包含章节列表和共享角色列表。"""
     universe = await get_or_404(session, Universe, universe_id)
     svc = UniverseService(session)
 
@@ -164,6 +169,7 @@ async def update_universe(
     payload: UniverseUpdate,
     session: AsyncSession = SessionDep,
 ):
+    """更新 IP 宇宙信息。"""
     universe = await get_or_404(session, Universe, universe_id)
     svc = UniverseService(session)
 
@@ -201,6 +207,7 @@ async def add_project_to_universe(
     payload: UniverseProjectLinkCreate,
     session: AsyncSession = SessionDep,
 ):
+    """将项目关联到 IP 宇宙，设定章节信息。"""
     await get_or_404(session, Universe, universe_id)
     project = await get_or_404(session, Project, payload.project_id)
 
@@ -234,6 +241,7 @@ async def remove_project_from_universe(
     project_id: int,
     session: AsyncSession = SessionDep,
 ):
+    """将项目从 IP 宇宙中移除。"""
     await get_or_404(session, Universe, universe_id)
     await get_or_404(session, Project, project_id)
 
@@ -256,6 +264,7 @@ async def promote_character(
     payload: SharedCharacterPromote,
     session: AsyncSession = SessionDep,
 ):
+    """将项目角色提升为宇宙共享角色。"""
     await get_or_404(session, Universe, universe_id)
 
     svc = UniverseService(session)
@@ -274,6 +283,7 @@ async def list_shared_characters(
     universe_id: int,
     session: AsyncSession = SessionDep,
 ):
+    """列出宇宙下所有共享角色。"""
     await get_or_404(session, Universe, universe_id)
     svc = UniverseService(session)
     shared_chars = await svc.get_universe_shared_characters(universe_id)
@@ -290,6 +300,7 @@ async def create_shared_character_manual(
     payload: SharedCharacterManualCreate,
     session: AsyncSession = SessionDep,
 ):
+    """手动创建宇宙共享角色（不依赖项目角色）。"""
     await get_or_404(session, Universe, universe_id)
 
     sc = SharedCharacter(
@@ -317,6 +328,7 @@ async def import_character_to_project(
     shared_character_id: int,
     session: AsyncSession = SessionDep,
 ):
+    """将共享角色导入到指定项目中。"""
     await get_or_404(session, Project, project_id)
 
     svc = UniverseService(session)
@@ -336,6 +348,7 @@ async def sync_character_to_universe(
     character_id: int,
     session: AsyncSession = SessionDep,
 ):
+    """将项目角色的最新数据同步回对应的宇宙共享角色。"""
     await get_or_404(session, Character, character_id)
 
     svc = UniverseService(session)

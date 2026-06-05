@@ -1,3 +1,4 @@
+// 分镜图区域 shape 工具类，展示镜头卡片网格并支持审查操作
 import {
 	HTMLContainer,
 	Rectangle2d,
@@ -19,6 +20,7 @@ import type { ShapeActionName } from "../canvasEvents";
 import { SvgIcon } from "~/components/ui/SvgIcon";
 import { useDomSize, getShapeSize } from "~/hooks/useDomSize";
 
+// 镜头卡片组件：展示镜头图片、描述、运镜信息，支持编辑/重新生成/批准等操作
 function ShotCard({ shot }: { shot: ReviewedShot }) {
 	const isApproved = shot.approval_state === "approved";
 	const imageUrl = getStaticUrl(shot.image_url);
@@ -248,6 +250,7 @@ function ShotCard({ shot }: { shot: ReviewedShot }) {
 	);
 }
 
+// 分镜图区域 shape 工具类
 export class StoryboardSectionShapeUtil extends ShapeUtil<StoryboardSectionShape> {
 	static override type = "storyboard-section" as const;
 

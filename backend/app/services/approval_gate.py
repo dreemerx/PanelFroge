@@ -1,3 +1,5 @@
+"""审批门控服务 — 判断项目是否满足进入视频生成和最终合并的前置条件。"""
+
 from __future__ import annotations
 
 from typing import cast
@@ -15,6 +17,18 @@ from app.services.creative_control import collect_project_blocking_clips
 async def can_enter_clip_generation(
     session: AsyncSession, run: AgentRun, target_ids: TargetIds | None = None
 ) -> bool:
+    """判断是否可以进入视频片段生成阶段。
+
+    所有关联分镜必须处于已审批（approved）状态。
+
+    Args:
+        session: 数据库会话
+        run: 当前 AgentRun
+        target_ids: 可选的目标分镜/角色 ID
+
+    Returns:
+        是否满足进入条件
+    """
     if run.id is None:
         return False
 
@@ -52,4 +66,15 @@ async def can_enter_clip_generation(
 
 
 async def can_enter_final_merge(session: AsyncSession, project: Project) -> bool:
+    """判断是否可以进入最终视频合并阶段。
+
+    需要所有分镜视频均已就绪（无阻塞项）。
+
+    Args:
+        session: 数据库会话
+        project: 项目对象
+
+    Returns:
+        是否满足进入条件
+    """
     return not await collect_project_blocking_clips(session, project)

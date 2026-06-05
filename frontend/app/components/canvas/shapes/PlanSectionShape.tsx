@@ -1,3 +1,4 @@
+// 编剧规划区域 shape 工具类，展示故事原文、摘要和分镜总览表格
 import {
 	HTMLContainer,
 	Rectangle2d,
@@ -18,6 +19,7 @@ import {
 } from "~/utils/workspaceStatus";
 import { useDomSize, getShapeSize } from "~/hooks/useDomSize";
 
+// 编剧规划区域 shape 工具类
 export class PlanSectionShapeUtil extends ShapeUtil<PlanSectionShape> {
 	static override type = "plan-section" as const;
 

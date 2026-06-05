@@ -1,3 +1,5 @@
+"""文本生成服务 — OpenAI 兼容接口封装，支持流式/非流式输出和自动降级。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -20,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class TextServiceError(Exception):
-    """文本服务基础异常"""
+    """文本服务基础异常。"""
 
     def __init__(
         self, message: str, status_code: int | None = None, response_body: str | None = None
@@ -31,15 +33,15 @@ class TextServiceError(Exception):
 
 
 class TextServiceAuthError(TextServiceError):
-    """认证失败异常（401/403）"""
+    """认证失败异常（401/403）。"""
 
 
 class TextServiceRateLimitError(TextServiceError):
-    """限流异常（429）"""
+    """限流异常（429）。"""
 
 
 class TextServiceServerError(TextServiceError):
-    """服务器错误异常（5xx）"""
+    """服务器错误异常（5xx）。"""
 
 
 class TextService:
@@ -66,7 +68,7 @@ class TextService:
         last_body: str | None,
         context: str = "Text generation request",
     ) -> None:
-        """Raise the appropriate TextServiceError subclass based on status code."""
+        """根据状态码抛出对应的 TextServiceError 子类异常。"""
         if last_status in (401, 403):
             raise TextServiceAuthError(
                 f"Authentication failed (HTTP {last_status})",
@@ -388,6 +390,7 @@ class TextService:
         )
 
     async def probe(self) -> TextProviderCapability:
+        """探测文本 Provider 的可用性（生成能力和流式能力）。"""
         probe_messages = [{"role": "user", "content": "Reply with OK only."}]
 
         try:

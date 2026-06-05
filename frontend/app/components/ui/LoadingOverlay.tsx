@@ -1,8 +1,10 @@
+// LoadingOverlay 组件的属性接口
 interface LoadingOverlayProps {
   text?: string;
   className?: string;
 }
 
+// 加载遮罩层组件：覆盖父容器，显示加载动画和可选文本
 export function LoadingOverlay({ text, className }: LoadingOverlayProps) {
   return (
     <div

@@ -1,3 +1,5 @@
+"""资产库 API 路由，管理角色和场景资产的 CRUD 及跨项目复用。"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
@@ -26,6 +28,7 @@ async def list_assets(
     tag: str | None = None,
     session: AsyncSession = SessionDep,
 ):
+    """查询资产列表，支持按类型、关键词、标签筛选。"""
     q = select(Asset).order_by(Asset.updated_at.desc())
     if asset_type:
         q = q.where(Asset.asset_type == asset_type)
@@ -41,6 +44,7 @@ async def list_assets(
 
 @router.post("", response_model=AssetRead, status_code=status.HTTP_201_CREATED)
 async def create_asset(payload: AssetCreate, session: AsyncSession = SessionDep):
+    """创建新资产。"""
     asset = Asset(
         name=payload.name,
         asset_type=payload.asset_type,
@@ -60,6 +64,7 @@ async def create_asset(payload: AssetCreate, session: AsyncSession = SessionDep)
     "/from-character/{character_id}", response_model=AssetRead, status_code=status.HTTP_201_CREATED
 )
 async def create_asset_from_character(character_id: int, session: AsyncSession = SessionDep):
+    """将已审批角色保存为可复用的角色资产。"""
     character = await session.get(Character, character_id)
     if not character:
         raise HTTPException(status_code=404, detail="Character not found")
@@ -78,7 +83,7 @@ async def create_asset_from_character(character_id: int, session: AsyncSession =
 
 @router.post("/from-shot/{shot_id}", response_model=AssetRead, status_code=status.HTTP_201_CREATED)
 async def create_asset_from_shot(shot_id: int, session: AsyncSession = SessionDep):
-    """将镜头保存为场景资产"""
+    """将镜头保存为可复用的场景资产。"""
     import json
 
     shot = await session.get(Shot, shot_id)
@@ -112,6 +117,7 @@ async def create_asset_from_shot(shot_id: int, session: AsyncSession = SessionDe
 
 @router.get("/{asset_id}", response_model=AssetRead)
 async def get_asset(asset_id: int, session: AsyncSession = SessionDep):
+    """根据 ID 获取单个资产详情。"""
     asset = await session.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -120,6 +126,7 @@ async def get_asset(asset_id: int, session: AsyncSession = SessionDep):
 
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(asset_id: int, session: AsyncSession = SessionDep):
+    """删除指定资产。"""
     asset = await session.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -134,7 +141,7 @@ async def use_asset_in_project(
     payload: UseAssetInProjectRequest,
     session: AsyncSession = SessionDep,
 ):
-    """将资产拉入目标项目：character→创建角色，scene/style→创建镜头"""
+    """将资产拉入目标项目：character 类型创建角色，scene 类型创建镜头。"""
     asset = await session.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")

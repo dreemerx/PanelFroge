@@ -1,11 +1,14 @@
+// 工作区状态推导工具，根据项目数据和运行状态计算各分区的展示状态
 import type { Character, Project, RecoverySummaryRead, Shot } from "~/types";
 import { getWorkflowStageUnlockRank } from "~/utils/workflowStage";
 
+// 工作区分区键名：规划、渲染、合成
 export type WorkspaceSectionKey =
   | "plan"
   | "render"
   | "compose";
 
+// 工作区分区状态
 export type WorkspaceSectionState =
   | "draft"
   | "generating"
@@ -15,6 +18,7 @@ export type WorkspaceSectionState =
   | "superseded"
   | "waiting-for-review";
 
+// 工作区分区状态信息
 export interface WorkspaceSectionStatus {
   key: WorkspaceSectionKey;
   title: string;
@@ -22,6 +26,7 @@ export interface WorkspaceSectionStatus {
   placeholder: boolean;
 }
 
+// 工作区状态推导的输入数据
 export interface WorkspaceProjectionInput {
   project: Project;
   currentStage: string;
@@ -32,11 +37,13 @@ export interface WorkspaceProjectionInput {
   videoProviderValid?: boolean | null;
 }
 
+// 工作区整体状态
 export interface WorkspaceStatus {
   stageLabel: WorkspaceSectionState;
   sections: WorkspaceSectionStatus[];
 }
 
+// 根据项目状态和运行参数推导工作区运行状态字符串
 export function deriveWorkspaceRunState(input: {
   projectStatus?: string | null;
   isGenerating?: boolean;
@@ -68,6 +75,7 @@ export function deriveWorkspaceRunState(input: {
   return "draft";
 }
 
+// 最终输出区域的展示元数据
 export interface WorkspaceFinalOutputMeta {
   sectionState: WorkspaceSectionState;
   statusLabel: string;
@@ -82,6 +90,7 @@ export interface WorkspaceFinalOutputMeta {
   retryThreadId: string | null;
 }
 
+// 标准分区定义（规划/渲染/合成）
 export const CANONICAL_SECTIONS: Array<Pick<WorkspaceSectionStatus, "key" | "title">> = [
   { key: "plan", title: "规划" },
   { key: "render", title: "渲染" },
@@ -110,6 +119,7 @@ const SECTION_STAGE_ORDER: Record<WorkspaceSectionKey, number> = {
   compose: 2,
 };
 
+// 获取恢复摘要中已保留阶段的最高等级
 function getPreservedUnlockRank(recoverySummary?: RecoverySummaryRead | null) {
   if (!recoverySummary?.preserved_stages?.length) {
     return -1;
@@ -120,6 +130,7 @@ function getPreservedUnlockRank(recoverySummary?: RecoverySummaryRead | null) {
   }, -1);
 }
 
+// 获取有效解锁等级（取当前阶段和保留阶段中的最高等级）
 function getEffectiveUnlockRank(input: Pick<WorkspaceProjectionInput, "currentStage" | "recoverySummary">) {
   return Math.max(
     getWorkflowStageUnlockRank(input.currentStage),
@@ -127,18 +138,22 @@ function getEffectiveUnlockRank(input: Pick<WorkspaceProjectionInput, "currentSt
   );
 }
 
+// 判断当前是否已到达或超过指定阶段
 function isAtOrPastStage(input: Pick<WorkspaceProjectionInput, "currentStage" | "recoverySummary">, targetStage: number) {
   return getEffectiveUnlockRank(input) >= targetStage;
 }
 
+// 检查角色列表中是否有已批准的角色
 function hasApprovedContent(characters: Character[]) {
   return characters.some((character) => character.approval_state === "approved");
 }
 
+// 检查分镜列表中是否有含图片的分镜
 function hasStoryboardContent(shots: Shot[]) {
   return shots.some((shot) => Boolean(shot.image_url));
 }
 
+// 根据输入数据推导指定分区的状态
 function resolveSectionState(input: WorkspaceProjectionInput, key: WorkspaceSectionKey): WorkspaceSectionState {
   const { project, runState, characters, shots } = input;
 
@@ -207,6 +222,7 @@ function resolveSectionState(input: WorkspaceProjectionInput, key: WorkspaceSect
   return "blocked";
 }
 
+// 将运行状态和制品状态转换为工作区分区状态标签
 export function toCreatorStageLabel(input: {
   runState: string;
   artifactState?: string | null;
@@ -238,6 +254,7 @@ export function toCreatorStageLabel(input: {
   return "draft";
 }
 
+// 构建完整的工作区状态，计算所有可见分区的状态
 export function buildWorkspaceStatus(input: WorkspaceProjectionInput): WorkspaceStatus {
   const effectiveUnlockRank = getEffectiveUnlockRank(input);
   const sections = CANONICAL_SECTIONS.filter((section) =>
@@ -265,6 +282,7 @@ export function buildWorkspaceStatus(input: WorkspaceProjectionInput): Workspace
   };
 }
 
+// 判断分区是否应当显示
 function isSectionVisible(
   effectiveUnlockRank: number,
   key: WorkspaceSectionKey,
@@ -287,10 +305,12 @@ function isSectionVisible(
   return effectiveUnlockRank >= SECTION_STAGE_ORDER[key];
 }
 
+// 获取分区状态的中文显示标签
 export function getWorkspaceSectionStatusLabel(state: WorkspaceSectionState | string) {
   return SECTION_STATUS_LABELS[state as WorkspaceSectionState] ?? "待生成";
 }
 
+// 根据分区状态返回对应的 CSS badge 类名
 export function getWorkspaceSectionStatusBadgeClass(state: WorkspaceSectionState | string) {
   if (state === "complete") {
     return "badge-success";
@@ -311,14 +331,17 @@ export function getWorkspaceSectionStatusBadgeClass(state: WorkspaceSectionState
   return "badge-ghost";
 }
 
+// 获取分区的占位提示文本
 export function getWorkspaceSectionPlaceholderText(key: WorkspaceSectionKey) {
   return SECTION_PLACEHOLDERS[key];
 }
 
+// 获取项目最终视频的下载 URL
 export function getProjectFinalVideoDownloadUrl(projectId: number) {
   return `/api/v1/projects/${projectId}/final-video`;
 }
 
+// 获取最终输出区域的完整展示元数据（状态、来源说明、下载链接等）
 export function getWorkspaceFinalOutputMeta(
   input: WorkspaceProjectionInput
 ): WorkspaceFinalOutputMeta {
@@ -351,6 +374,7 @@ export function getWorkspaceFinalOutputMeta(
   };
 }
 
+// 获取最终输出的来源说明文本
 function getFinalOutputProvenanceText(
   state: WorkspaceSectionState,
   videoProviderValid?: boolean | null,
@@ -378,6 +402,7 @@ function getFinalOutputProvenanceText(
   return "来源：等待渲染完成后生成最终视频";
 }
 
+// 获取最终输出的阻塞原因说明
 function getFinalOutputBlockingText(input: {
   sectionState: WorkspaceSectionState;
   videoProviderValid?: boolean | null;
@@ -399,6 +424,7 @@ function getFinalOutputBlockingText(input: {
   return "";
 }
 
+// 构建重试合成的上下文反馈文本
 function buildFinalOutputRetryFeedback(input: {
   sectionState: WorkspaceSectionState;
   runId: number | null;

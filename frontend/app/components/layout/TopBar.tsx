@@ -1,3 +1,4 @@
+// 顶部导航栏组件，包含项目切换下拉菜单、资产/历史抽屉按钮及主题/设置控制
 import {
 	Cog6ToothIcon,
 	FilmIcon,
@@ -17,6 +18,7 @@ import type { Project } from "~/types";
 import { Button } from "~/components/ui/Button";
 import { SvgIcon } from "~/components/ui/SvgIcon";
 
+// TopBar 组件的属性接口
 interface TopBarProps {
 	onToggleAssets: () => void;
 	onToggleHistory: () => void;
@@ -25,6 +27,7 @@ interface TopBarProps {
 	projectId?: number;
 }
 
+// 项目下拉切换菜单，显示所有项目并支持快速导航
 function ProjectDropdown({ currentId }: { currentId?: number }) {
 	const [open, setOpen] = useState(false);
 	const ref = useRef<HTMLDivElement>(null);
@@ -104,6 +107,7 @@ function ProjectDropdown({ currentId }: { currentId?: number }) {
 	);
 }
 
+// PanelForge 应用 Logo SVG 组件
 function PanelForgeLogo() {
 	return (
 		<svg width="22" height="22" viewBox="0 0 32 32" className="flex-shrink-0" aria-hidden="true">
@@ -120,6 +124,7 @@ function PanelForgeLogo() {
 	);
 }
 
+// 顶部导航栏组件：项目切换、资产/历史抽屉、主题切换和设置入口
 export function TopBar({
 	onToggleAssets,
 	onToggleHistory,

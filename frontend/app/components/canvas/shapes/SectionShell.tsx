@@ -1,6 +1,8 @@
+// 画布区域通用外壳组件，提供标题栏、状态标签和占位/内容切换
 import { DocumentIcon } from "@heroicons/react/24/outline";
 import { type PropsWithChildren, type ReactNode } from "react";
 
+// SectionShell 组件的属性接口
 interface SectionShellProps {
   sectionTitle: string;
   sectionKey: "plan" | "render" | "compose";
@@ -11,6 +13,7 @@ interface SectionShellProps {
   children: ReactNode;
 }
 
+// 画布区域外壳组件：统一的标题栏、状态标签和占位符展示
 export function SectionShell({
   sectionTitle,
   sectionKey,

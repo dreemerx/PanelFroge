@@ -1,3 +1,4 @@
+// 全局设置弹窗组件，管理数据库、文本/图像/视频服务等环境变量配置
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSettingsStore } from "~/stores/settingsStore";
@@ -18,8 +19,10 @@ import {
 	ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 
+// 提示类型
 type AlertType = "success" | "error" | "warning";
 
+// 提示状态接口
 interface AlertState {
 	show: boolean;
 	type: AlertType;
@@ -28,6 +31,7 @@ interface AlertState {
 	details?: string;
 }
 
+// 全局设置弹窗组件：分标签页管理各项配置，支持测试连接和保存
 export function SettingsModal() {
 	const { isModalOpen, closeModal } = useSettingsStore();
 	const queryClient = useQueryClient();
@@ -1013,7 +1017,7 @@ export function SettingsModal() {
 	);
 }
 
-// 配置项详细说明
+// 获取配置项的详细中文说明
 function getConfigDescription(key: string): string {
 	const descriptions: Record<string, string> = {
 		// 基础设置

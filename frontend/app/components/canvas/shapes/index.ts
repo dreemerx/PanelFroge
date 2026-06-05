@@ -1,3 +1,4 @@
+// canvas shape 工具类统一导出，注册所有自定义 shape 到 tldraw
 import { StoryboardBoardShapeUtil } from "./StoryboardBoardShape";
 import { ScriptSectionShapeUtil } from "./ScriptSectionShape";
 import { CharacterSectionShapeUtil } from "./CharacterSectionShape";

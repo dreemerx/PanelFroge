@@ -1,3 +1,4 @@
+// 阶段管线组件，以水平进度条形式展示 AI 生成流程的各个阶段
 import {
 	CheckIcon,
 	ExclamationTriangleIcon,
@@ -14,6 +15,7 @@ import type { WorkflowStage } from "~/types";
 import { STAGE_PIPELINE, getPipelineStageIndex } from "~/utils/pipeline";
 import { Button } from "~/components/ui/Button";
 
+// 阶段图标映射
 const STAGE_ICONS: Record<string, typeof LightBulbIcon> = {
 	bulb: LightBulbIcon,
 	sparkle: SparklesIcon,
@@ -23,6 +25,7 @@ const STAGE_ICONS: Record<string, typeof LightBulbIcon> = {
 	palette: PaintBrushIcon,
 };
 
+// StagePipeline 组件的属性接口
 interface StagePipelineProps {
 	currentStage: WorkflowStage;
 	isGenerating: boolean;
@@ -32,6 +35,7 @@ interface StagePipelineProps {
 	onCancel: () => void;
 }
 
+// 阶段管线组件：展示当前生成进度，支持恢复和取消操作
 export function StagePipeline({
 	currentStage,
 	isGenerating,

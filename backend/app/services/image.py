@@ -1,3 +1,5 @@
+"""图像生成服务 — 支持 OpenAI 兼容接口、ModelScope、Agnes 等多种后端。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -342,6 +344,19 @@ class ImageService:
         stream: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
+        """调用图像生成 API，返回原始响应字典。
+
+        Args:
+            prompt: 图片描述提示词
+            size: 图片尺寸
+            n: 生成数量
+            style: 风格
+            response_format: 响应格式（url 或 b64_json）
+            stream: 是否流式
+
+        Returns:
+            API 原始响应字典
+        """
         url = self._build_url()
 
         if "/chat/completions" in self.settings.image_endpoint:
@@ -375,6 +390,16 @@ class ImageService:
         image_bytes: bytes | None = None,
         **kwargs: Any,
     ) -> str:
+        """生成图片并返回 URL。支持文生图和图生图（I2I）模式。
+
+        Args:
+            prompt: 图片描述提示词
+            size: 图片尺寸
+            image_bytes: 参考图片字节流（图生图模式）
+
+        Returns:
+            生成图片的 URL
+        """
         # ModelScope API（异步轮询模式）
         if self._is_modelscope_api():
             if image_bytes is not None:

@@ -1,3 +1,5 @@
+"""项目删除服务 — 级联删除项目的文件、数据库记录和关联资源。"""
+
 from __future__ import annotations
 
 from typing import cast
@@ -109,6 +111,15 @@ async def delete_project_data(session: AsyncSession, project_id: int) -> None:
 
 
 async def delete_project_by_id(session: AsyncSession, project_id: int) -> None:
+    """按 ID 删除单个项目及其所有关联资源（文件、数据库记录）。
+
+    Args:
+        session: 数据库会话
+        project_id: 项目 ID
+
+    Raises:
+        HTTPException: 项目不存在时返回 404
+    """
     project = await session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")

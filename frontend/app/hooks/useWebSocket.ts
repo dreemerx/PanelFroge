@@ -1,3 +1,4 @@
+// 项目 WebSocket 连接管理 Hook，处理实时事件推送和自动重连
 import { useEffect, useRef, useCallback } from "react";
 import { useEditorStore, type RunMode } from "~/stores/editorStore";
 import { getStaticUrl } from "~/services/api";
@@ -41,11 +42,13 @@ function generateMessageId(): string {
 
 const globalConnections = new Map<number, WebSocket>();
 
+// 判断是否应自动确认（YOLO 模式下自动确认）
 function shouldAutoConfirm(_agent: string | null, runMode: RunMode): boolean {
 	if (runMode === "yolo") return true;
 	return false;
 }
 
+// 项目 WebSocket 连接 Hook，返回发送消息、断开连接、重连和清除自动确认的方法
 export function useProjectWebSocket(projectId: number | null) {
 	const reconnectAttempts = useRef(0);
 	const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -213,6 +216,7 @@ export function useProjectWebSocket(projectId: number | null) {
 	return { send, disconnect, reconnect: connect, clearAutoConfirm };
 }
 
+// 清除消息列表中的加载状态，可按 agent 名称过滤
 function clearLoadingStates(
 	store: ReturnType<typeof useEditorStore.getState>,
 	agentFilter?: string,
@@ -229,6 +233,7 @@ function clearLoadingStates(
 	}
 }
 
+// 判断消息是否为临时进度消息（加载中或批处理流水账）
 function isTransientProgressMessage(msg: AgentMessage): boolean {
 	const content = msg.content.trim();
 	return (
@@ -237,6 +242,7 @@ function isTransientProgressMessage(msg: AgentMessage): boolean {
 	);
 }
 
+// 清理过期的临时消息（确认/继续执行提示、空消息、加载中进度消息）
 function cleanupStaleMessages(
 	store: ReturnType<typeof useEditorStore.getState>,
 	completedAgent?: string,
@@ -261,6 +267,7 @@ function cleanupStaleMessages(
 	}
 }
 
+// 从 WebSocket 事件数据中解析并更新当前工作流阶段
 function applyStage(
 	store: ReturnType<typeof useEditorStore.getState>,
 	data: Record<string, unknown>,
@@ -271,6 +278,7 @@ function applyStage(
 
 type AutoConfirmFn = (runId: number) => void;
 
+// 处理 WebSocket 事件，根据事件类型更新编辑器状态和消息列表
 export function applyWsEvent(
 	event: WsEvent,
 	store: ReturnType<typeof useEditorStore.getState>,

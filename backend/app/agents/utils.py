@@ -7,6 +7,8 @@ from collections.abc import Sequence
 from typing import Protocol
 
 class CharacterLike(Protocol):
+    """角色对象协议，定义 build_character_context 所需的最小接口"""
+
     name: str
     description: str | None
 
@@ -95,10 +97,7 @@ def extract_json(text: str) -> dict:
 
 
 def _extract_first_complete_json(text: str) -> str | None:
-    """从文本中提取第一个完整的 JSON 对象。
-
-    使用括号匹配算法找到第一个完整的 {} 对。
-    """
+    """从文本中使用括号匹配算法提取第一个完整的 JSON 对象"""
     start = text.find("{")
     if start == -1:
         return None
@@ -138,7 +137,7 @@ def _extract_first_complete_json(text: str) -> str | None:
 
 
 def _fix_common_json_errors(text: str) -> str:
-    """修复 LLM 生成 JSON 的常见错误。"""
+    """修复 LLM 生成 JSON 的常见错误（尾随逗号、缺少逗号、注释等）"""
     # 移除注释（// 和 /* */）
     text = re.sub(r'//[^\n]*', '', text)
     text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
@@ -176,7 +175,7 @@ def _fix_common_json_errors(text: str) -> str:
 
 
 def _try_fix_incomplete_json(text: str) -> str:
-    """尝试修复不完整的 JSON 字符串。"""
+    """尝试闭合不完整的 JSON 字符串（补全未闭合的括号和引号）"""
     # 计算未闭合的括号
     open_braces = 0
     open_brackets = 0

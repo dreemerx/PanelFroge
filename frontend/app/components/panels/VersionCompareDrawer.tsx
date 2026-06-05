@@ -1,3 +1,4 @@
+// 版本对比抽屉组件，支持选择两个版本进行并排对比和回滚操作
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/Button";
@@ -7,6 +8,7 @@ import { useEditorStore } from "~/stores/editorStore";
 import type { ArtifactVersion, VersionDiff, VersionEntityType } from "~/types";
 import { toast } from "~/utils/toast";
 
+// VersionCompareDrawer 组件的属性接口
 interface VersionCompareDrawerProps {
 	open: boolean;
 	projectId: number;
@@ -15,6 +17,7 @@ interface VersionCompareDrawerProps {
 	onClose: () => void;
 }
 
+// 字段名到中文标签的映射
 const LABELS: Record<string, string> = {
 	name: "名称",
 	description: "描述",
@@ -31,6 +34,7 @@ const LABELS: Record<string, string> = {
 	visual_notes: "视觉设定",
 };
 
+// 版本对比中需要展示的字段列表
 const DISPLAY_FIELDS = [
 	"name",
 	"description",
@@ -45,6 +49,7 @@ const DISPLAY_FIELDS = [
 	"visual_notes",
 ];
 
+// 将任意值转换为可显示的文本
 function valueToText(value: unknown): string {
 	if (value === null || value === undefined || value === "") return "—";
 	if (Array.isArray(value)) return value.join(", ");
@@ -52,10 +57,12 @@ function valueToText(value: unknown): string {
 	return String(value);
 }
 
+// 生成版本标签文本
 function versionLabel(version: ArtifactVersion): string {
 	return `v${version.version} · ${version.trigger}`;
 }
 
+// 版本列组件：展示单个版本的图片和属性快照
 function VersionColumn({ title, version }: { title: string; version?: ArtifactVersion }) {
 	const imageUrl = getStaticUrl(version?.snapshot.image_url as string | null | undefined);
 	return (
@@ -86,6 +93,7 @@ function VersionColumn({ title, version }: { title: string; version?: ArtifactVe
 	);
 }
 
+// 差异行组件：展示单个字段的新旧值对比
 function DiffRow({ diff }: { diff: VersionDiff }) {
 	return (
 		<li className="rounded border border-base-content/10 bg-base-100 p-2 text-xs">
@@ -104,6 +112,7 @@ function DiffRow({ diff }: { diff: VersionDiff }) {
 	);
 }
 
+// 版本对比抽屉组件：选择实体和版本进行并排对比，支持回滚
 export function VersionCompareDrawer({
 	open,
 	projectId,

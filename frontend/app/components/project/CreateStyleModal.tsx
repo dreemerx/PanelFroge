@@ -1,3 +1,4 @@
+// 创建自定义风格模板的弹窗组件
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { styleTemplatesApi } from "~/services/api";
@@ -7,12 +8,14 @@ import { Input } from "~/components/ui/Input";
 import { toast } from "~/utils/toast";
 import type { StyleTemplateCreatePayload } from "~/types";
 
+// CreateStyleModal 组件的属性接口
 interface CreateStyleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated?: (slug: string) => void;
 }
 
+// 创建自定义风格模板弹窗：填写名称、提示词、色调关键词等
 export function CreateStyleModal({ isOpen, onClose, onCreated }: CreateStyleModalProps) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<StyleTemplateCreatePayload>({

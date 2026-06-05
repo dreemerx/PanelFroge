@@ -1,3 +1,4 @@
+// 合成输出区域 shape 工具类，展示最终合成视频和下载功能
 import {
 	HTMLContainer,
 	Rectangle2d,
@@ -27,10 +28,12 @@ const VIDEO_PLACEHOLDER_ICON = (
 	</svg>
 );
 
+// 阻止画布拖拽事件冒泡
 function stopCanvasDrag(e: React.PointerEvent<HTMLElement>) {
 	e.stopPropagation();
 }
 
+// 合成输出区域 shape 工具类
 export class ComposeSectionShapeUtil extends ShapeUtil<ComposeSectionShape> {
 	static override type = "compose-section" as const;
 

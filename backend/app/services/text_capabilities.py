@@ -1,3 +1,5 @@
+"""文本 Provider 能力探测与缓存 — 管理 Provider 的可用性状态和 TTL 缓存。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ ProviderStatus = Literal["valid", "degraded", "invalid"]
 
 @dataclass(slots=True)
 class TextProviderCapability:
+    """文本 Provider 能力探测结果。"""
     status: ProviderStatus
     generate: bool
     stream: bool
@@ -31,6 +34,7 @@ def build_provider_capability_cache_key(
     anthropic_model: str,
     secret: str | None,
 ) -> str:
+    """构建 Provider 能力缓存键（基于连接参数和密钥哈希）。"""
     secret_hash = hashlib.sha256((secret or "").encode("utf-8")).hexdigest()[:12] if secret else "none"
     return "|".join(
         [
@@ -46,6 +50,7 @@ def build_provider_capability_cache_key(
 
 
 def get_cached_provider_capability(cache_key: str) -> TextProviderCapability | None:
+    """获取缓存的 Provider 能力探测结果（过期返回 None）。"""
     cached = _CAPABILITY_CACHE.get(cache_key)
     if cached is None:
         return None
@@ -59,5 +64,6 @@ def get_cached_provider_capability(cache_key: str) -> TextProviderCapability | N
 def set_cached_provider_capability(
     cache_key: str, result: TextProviderCapability, *, ttl_s: float
 ) -> TextProviderCapability:
+    """设置 Provider 能力探测结果缓存。"""
     _CAPABILITY_CACHE[cache_key] = (time.monotonic() + ttl_s, result)
     return result

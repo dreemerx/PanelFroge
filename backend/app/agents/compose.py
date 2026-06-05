@@ -1,3 +1,5 @@
+"""合成 Agent — 生成分镜视频、拼接最终视频并添加音频"""
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class ComposeAgent(BaseAgent):
+    """视频合成 Agent，负责分镜视频生成、拼接和音频处理"""
+
     name = "compose"
 
     def __init__(self):
@@ -27,6 +31,7 @@ class ComposeAgent(BaseAgent):
         self.image_composer = ImageComposer()
 
     def _build_video_prompt(self, shot: Shot, characters: list[Character], *, style: str) -> str:
+        """为单个分镜构建视频生成 prompt"""
         desc = shot.prompt or shot.description
         parts = [desc.strip()]
         char_context = build_character_context(characters)
@@ -37,11 +42,13 @@ class ComposeAgent(BaseAgent):
         return ", ".join(parts)
 
     def _get_duration(self, shot: Shot, default_duration: float) -> float:
+        """获取分镜时长，未指定时使用默认值"""
         if shot.duration and shot.duration > 0:
             return shot.duration
         return default_duration
 
     async def _generate_videos(self, ctx: AgentContext) -> int:
+        """并行为所有无视频的分镜生成视频片段，返回成功数量"""
         query = select(Shot).where(
             Shot.project_id == ctx.project.id,
             Shot.video_url.is_(None),
@@ -167,6 +174,7 @@ class ComposeAgent(BaseAgent):
         return updated_count
 
     async def _merge_videos(self, ctx: AgentContext) -> None:
+        """将所有分镜视频按顺序拼接为完整项目视频"""
         project_id = ctx.project.id
         if project_id is None:
             raise RuntimeError("Project must be persisted before final assembly")
@@ -456,7 +464,7 @@ class ComposeAgent(BaseAgent):
         )
 
     async def run_videos(self, ctx: AgentContext) -> int:
-        """Generate shot videos only (sub-step 1)."""
+        """生成分镜视频（子步骤 1），返回生成数量"""
         await self.send_message(ctx, "开始生成分镜视频...", progress=0.0, is_loading=True)
         video_count = await self._generate_videos(ctx)
         if video_count > 0:
@@ -474,15 +482,15 @@ class ComposeAgent(BaseAgent):
         return video_count
 
     async def run_merge(self, ctx: AgentContext) -> None:
-        """Merge shot videos into final video (sub-step 2)."""
+        """拼接分镜视频为最终视频（子步骤 2）"""
         await self._merge_videos(ctx)
 
     async def run_add_audio(self, ctx: AgentContext) -> None:
-        """Add TTS dubbing and BGM to shot videos and final merged video (sub-step 3)."""
+        """为分镜视频和最终视频添加 TTS 配音和 BGM（子步骤 3）"""
         await self._add_audio_to_videos(ctx)
 
     async def run(self, ctx: AgentContext) -> None:
-        """Legacy entry point — runs both sub-steps sequentially."""
+        """Agent 主入口，依次执行视频生成和拼接"""
         await self.send_message(
             ctx, "开始合成：先生成分镜视频，再拼接完整视频...", progress=0.0, is_loading=True
         )

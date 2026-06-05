@@ -1,3 +1,4 @@
+// 角色一致性评估面板，基于人脸特征计算跨分镜一致性并展示雷达图和趋势
 import { useCallback, useEffect, useState } from "react";
 import {
 	Radar,
@@ -23,11 +24,13 @@ import type {
 	ProjectConsistencyRead,
 } from "~/types";
 
+// ConsistencyPanel 组件的属性接口
 interface ConsistencyPanelProps {
 	projectId: number;
 	onClose: () => void;
 }
 
+// 评级颜色映射
 const GRADE_COLORS: Record<string, string> = {
 	A: "text-success",
 	B: "text-info",
@@ -36,6 +39,7 @@ const GRADE_COLORS: Record<string, string> = {
 	F: "text-error",
 };
 
+// 评级背景色映射
 const GRADE_BG: Record<string, string> = {
 	A: "bg-success/20",
 	B: "bg-info/20",
@@ -44,6 +48,7 @@ const GRADE_BG: Record<string, string> = {
 	F: "bg-error/20",
 };
 
+// 评级徽章组件
 function GradeBadge({ grade }: { grade: string }) {
 	return (
 		<span
@@ -54,6 +59,7 @@ function GradeBadge({ grade }: { grade: string }) {
 	);
 }
 
+// 角色一致性卡片组件：展示评分、雷达图和分镜匹配详情
 function CharacterCard({
 	report,
 	expanded,
@@ -154,6 +160,7 @@ function CharacterCard({
 	);
 }
 
+// 角色一致性评估面板组件：触发评估、展示报告和趋势图
 export function ConsistencyPanel({ projectId, onClose }: ConsistencyPanelProps) {
 	const [report, setReport] = useState<ProjectConsistencyRead | null>(null);
 	const [history, setHistory] = useState<ConsistencyReportRead[]>([]);

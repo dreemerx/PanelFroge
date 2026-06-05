@@ -1,3 +1,4 @@
+// 剧本区域 shape 工具类，展示故事文本、摘要和镜头表格
 import {
   HTMLContainer,
   Rectangle2d,
@@ -10,6 +11,7 @@ import { type ScriptSectionShape } from "./types";
 import { SectionShell } from "./SectionShell";
 import { useDomSize, getShapeSize } from "~/hooks/useDomSize";
 
+// 剧本区域 shape 工具类
 export class ScriptSectionShapeUtil extends ShapeUtil<ScriptSectionShape> {
   static override type = "script-section" as const;
 

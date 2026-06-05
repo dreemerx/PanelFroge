@@ -1,3 +1,4 @@
+// 编辑器全局状态管理（Zustand store），维护项目编辑器中所有运行时状态
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
@@ -14,8 +15,10 @@ import type {
 	WorkflowStage,
 } from "~/types";
 
+// 运行模式：手动确认 或 YOLO 自动确认
 export type RunMode = "manual" | "yolo";
 
+// 编辑器状态接口，包含项目元数据、运行状态、角色和分镜数据等
 interface EditorState {
 	selectedShotId: number | null;
 	selectedCharacterId: number | null;

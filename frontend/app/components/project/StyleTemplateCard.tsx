@@ -1,13 +1,15 @@
+// 风格模板卡片组件，展示风格预览渐变色、名称和描述
 import { clsx } from "clsx";
 import type { StyleTemplate } from "~/types";
 
+// StyleTemplateCard 组件的属性接口
 interface StyleTemplateCardProps {
   template: StyleTemplate;
   selected: boolean;
   onClick: (slug: string) => void;
 }
 
-/** CSS gradient backgrounds per builtin slug — no external images needed. */
+// 内置风格的 CSS 渐变背景映射
 const SLUG_GRADIENTS: Record<string, string> = {
   anime: "from-pink-500 to-purple-600",
   shonen: "from-red-600 to-orange-500",
@@ -27,6 +29,7 @@ const SLUG_GRADIENTS: Record<string, string> = {
 
 const DEFAULT_GRADIENT = "from-primary to-secondary";
 
+// 风格模板卡片组件：渐变预览、名称、描述和色调标签
 export function StyleTemplateCard({ template, selected, onClick }: StyleTemplateCardProps) {
   const gradient = SLUG_GRADIENTS[template.slug] ?? DEFAULT_GRADIENT;
 

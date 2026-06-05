@@ -1,3 +1,5 @@
+"""文本生成 API 路由，提供非流式和流式两种文本生成接口。"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter

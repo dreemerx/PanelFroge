@@ -1,3 +1,5 @@
+"""反馈审查规则引擎 — 分析用户反馈并路由到正确的 Agent 和模式"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -34,6 +36,7 @@ _RETRY_MERGE_KEYWORDS = (
 
 
 def _is_retry_merge_feedback(feedback: str) -> bool:
+    """判断用户反馈是否要求重试视频拼接"""
     normalized = feedback.strip().lower()
     return any(keyword in normalized for keyword in _RETRY_MERGE_KEYWORDS)
 
@@ -53,20 +56,25 @@ _FULL_RESTART_KEYWORDS = (
 
 
 def _is_full_restart_feedback(feedback: str) -> bool:
+    """判断用户反馈是否要求全量重做"""
     normalized = feedback.strip().lower()
     return any(kw in normalized for kw in _FULL_RESTART_KEYWORDS)
 
 
 def _decide_mode(feedback_type: str, feedback: str) -> str:
+    """根据反馈类型和内容决定增量或全量模式"""
     if _is_full_restart_feedback(feedback):
         return "full"
     return "incremental"
 
 
 class ReviewRuleEngine(BaseAgent):
+    """反馈审查规则引擎，解析用户反馈并输出路由决策（起始 Agent + 模式）"""
+
     name = "review"
 
     async def run(self, ctx: AgentContext) -> Any:
+        """分析用户反馈，输出路由决策（start_agent、mode、target_ids）"""
         feedback = ""
         if hasattr(ctx, "user_feedback") and ctx.user_feedback:
             feedback = ctx.user_feedback.strip()

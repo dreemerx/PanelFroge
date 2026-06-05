@@ -1,5 +1,7 @@
+// 确认弹窗组件，支持 danger/warning/info 三种变体样式
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
+// ConfirmModal 组件的属性接口
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,6 +14,7 @@ interface ConfirmModalProps {
   isLoading?: boolean;
 }
 
+// 确认弹窗组件：显示警告图标和确认/取消按钮
 export function ConfirmModal({
   isOpen,
   onClose,

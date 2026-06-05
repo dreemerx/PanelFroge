@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class UniverseService:
+    """IP 宇宙服务 — 管理跨项目的共享世界观、角色库和章节关联。"""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 

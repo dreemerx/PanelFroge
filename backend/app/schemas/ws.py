@@ -1,3 +1,5 @@
+"""WebSocket 事件相关的 Schema 定义。"""
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -49,6 +51,7 @@ WsEventType = Literal[
 
 
 class RunProgressEventData(BaseModel):
+    """运行进度事件数据。"""
     run_id: int
     project_id: int | None = None
     current_agent: str | None = None
@@ -60,6 +63,7 @@ class RunProgressEventData(BaseModel):
 
 
 class RunStartedEventData(BaseModel):
+    """运行开始事件数据。"""
     run_id: int
     project_id: int | None = None
     provider_snapshot: dict[str, Any] | None = None
@@ -73,6 +77,7 @@ class RunStartedEventData(BaseModel):
 
 
 class RunMessageEventData(BaseModel):
+    """运行消息事件数据（Agent 输出的文本流）。"""
     agent: str | None = None
     role: str | None = None
     content: str = ""
@@ -82,6 +87,7 @@ class RunMessageEventData(BaseModel):
 
 
 class RunCompletedEventData(BaseModel):
+    """运行完成事件数据。"""
     run_id: int | None = None
     project_id: int | None = None
     current_stage: str | None = None
@@ -91,6 +97,7 @@ class RunCompletedEventData(BaseModel):
 
 
 class RunFailedEventData(BaseModel):
+    """运行失败事件数据。"""
     run_id: int | None = None
     project_id: int | None = None
     error: str | None = None
@@ -99,6 +106,7 @@ class RunFailedEventData(BaseModel):
 
 
 class RunCancelledEventData(BaseModel):
+    """运行取消事件数据。"""
     run_id: int | None = None
     project_id: int | None = None
     run_ids: list[int] | None = None
@@ -106,31 +114,38 @@ class RunCancelledEventData(BaseModel):
 
 
 class DataClearedEventData(BaseModel):
+    """数据清除事件数据。"""
     cleared_types: list[str] = Field(default_factory=list)
 
 
 class ErrorEventData(BaseModel):
+    """错误事件数据。"""
     code: str
     message: str
 
 
 class CharacterCreatedEventData(BaseModel):
+    """角色创建事件数据。"""
     character: CharacterRead
 
 
 class CharacterDeletedEventData(BaseModel):
+    """角色删除事件数据。"""
     character_id: int
 
 
 class ShotCreatedEventData(BaseModel):
+    """镜头创建事件数据。"""
     shot: ShotRead
 
 
 class ShotDeletedEventData(BaseModel):
+    """镜头删除事件数据。"""
     shot_id: int
 
 
 class OutlineUpdatedEventData(BaseModel):
+    """大纲更新事件数据。"""
     project_id: int
     story_outline: StoryOutlineRead | None = None
     visual_bible: str | None = None
@@ -138,6 +153,7 @@ class OutlineUpdatedEventData(BaseModel):
 
 
 class RunAwaitingConfirmEventData(BaseModel):
+    """运行等待确认事件数据（Agent 暂停等待用户确认）。"""
     run_id: int
     project_id: int | None = None
     agent: str
@@ -157,6 +173,7 @@ class RunAwaitingConfirmEventData(BaseModel):
 
 
 class RunConfirmedEventData(BaseModel):
+    """运行确认事件数据（用户确认后继续）。"""
     run_id: int
     project_id: int | None = None
     agent: str
@@ -169,14 +186,17 @@ class RunConfirmedEventData(BaseModel):
 
 
 class CharacterUpdatedEventData(BaseModel):
+    """角色更新事件数据。"""
     character: CharacterRead
 
 
 class ShotUpdatedEventData(BaseModel):
+    """镜头更新事件数据。"""
     shot: ShotRead
 
 
 class BlockingClipPayload(BaseModel):
+    """阻塞片段载荷，描述阻碍视频合成的镜头。"""
     shot_id: int
     order: int
     status: str
@@ -184,6 +204,7 @@ class BlockingClipPayload(BaseModel):
 
 
 class ProjectUpdatedPayload(BaseModel):
+    """项目更新事件中的项目数据载荷。"""
     id: int
     title: str | None = None
     story: str | None = None
@@ -207,10 +228,12 @@ class ProjectUpdatedPayload(BaseModel):
 
 
 class ProjectUpdatedEventData(BaseModel):
+    """项目更新事件数据。"""
     project: ProjectUpdatedPayload
 
 
 class CritiqueResultEventData(BaseModel):
+    """评审结果事件数据。"""
     score: float = Field(ge=0.0, le=10.0)
     dimensions: dict[str, int] = Field(default_factory=dict)
     issues: list[str] = Field(default_factory=list)
@@ -221,6 +244,7 @@ class CritiqueResultEventData(BaseModel):
 
 
 class BibleUpdatedEventData(BaseModel):
+    """角色圣经更新事件数据。"""
     character_id: int
     visual_notes: bool = False  # whether visual_notes was updated
     reference_images_count: int = 0
@@ -228,6 +252,7 @@ class BibleUpdatedEventData(BaseModel):
 
 
 class AudioGeneratedEventData(BaseModel):
+    """音频生成完成事件数据。"""
     shot_id: int
     tts_url: str | None = None
     bgm_type: str | None = None
@@ -235,6 +260,7 @@ class AudioGeneratedEventData(BaseModel):
 
 
 class AgentThinkingEventData(BaseModel):
+    """Agent 思考过程事件数据。"""
     agent: str
     phase: Literal["reasoning", "decision", "planning", "reviewing"]
     content: str
@@ -242,6 +268,7 @@ class AgentThinkingEventData(BaseModel):
 
 
 class VersionCreatedEventData(BaseModel):
+    """版本创建事件数据。"""
     entity_type: Literal["character", "shot"]
     entity_id: int
     version: int
@@ -249,6 +276,7 @@ class VersionCreatedEventData(BaseModel):
 
 
 class VersionRollbackEventData(BaseModel):
+    """版本回滚事件数据。"""
     entity_type: Literal["character", "shot"]
     entity_id: int
     from_version: int
@@ -256,11 +284,13 @@ class VersionRollbackEventData(BaseModel):
 
 
 class ConsistencyEvalCompletedEventData(BaseModel):
+    """一致性评估完成事件数据。"""
     project_id: int
     overall_score: float = Field(ge=0.0, le=100.0)
     character_count: int = 0
 
 
 class WsEvent(BaseModel):
+    """WebSocket 事件通用包装模型。"""
     type: WsEventType
     data: dict[str, Any] = Field(default_factory=dict)

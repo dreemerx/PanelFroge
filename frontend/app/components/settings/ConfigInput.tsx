@@ -1,9 +1,11 @@
+// 配置项输入组件，支持敏感字段的显示/隐藏切换
 import { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { configApi } from "~/services/api";
 import type { ConfigItem } from "~/types";
 import { SvgIcon } from "~/components/ui/SvgIcon";
 
+// ConfigInput 组件的属性接口
 interface ConfigInputProps {
 	item: ConfigItem;
 	value: string;
@@ -12,6 +14,7 @@ interface ConfigInputProps {
 	) => void;
 }
 
+// 配置项输入组件：敏感字段支持揭示/隐藏真实值
 export function ConfigInput({ item, value, onChange }: ConfigInputProps) {
 	const [isRevealed, setIsRevealed] = useState(false);
 	const [isRevealing, setIsRevealing] = useState(false);

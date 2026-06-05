@@ -1,3 +1,4 @@
+// 应用入口文件，负责 MSW 模拟服务初始化和 React 根节点渲染
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -43,8 +44,7 @@ async function enableMocking() {
 
 	const { worker } = await import("~/mocks/browser");
 
-	// `worker.start()` returns a Promise that resolves
-	// once the Service Worker is up and running.
+	// `worker.start()` 返回一个 Promise，在 Service Worker 启动完成后 resolve
 	return worker.start({
 		onUnhandledRequest: "bypass",
 	});

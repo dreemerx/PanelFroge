@@ -1,3 +1,4 @@
+// 画布工具栏组件，提供选择/抓手工具、缩放控制和导出功能
 import { useCallback, useState, useRef, useEffect } from "react";
 import { track, useEditor } from "tldraw";
 import {
@@ -13,11 +14,13 @@ import { toast } from "~/utils/toast";
 import type { ExportResponse } from "~/types";
 import { ConsistencyPanel } from "~/components/panels/ConsistencyPanel";
 
+// CanvasToolbar 组件的属性接口
 interface CanvasToolbarProps {
   className?: string;
   projectId?: number;
 }
 
+// 画布工具栏组件：工具切换、缩放、导出 PDF/Webtoon、一致性评估
 export const CanvasToolbar = track(function CanvasToolbar({
   className,
   projectId,

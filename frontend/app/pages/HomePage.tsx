@@ -1,3 +1,4 @@
+// 首页组件，提供故事输入、风格选择、参考图上传及项目快速创建功能
 import { useState, useCallback, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { AssetDrawer } from "~/components/panels/AssetDrawer";
 import { HistoryDrawer } from "~/components/panels/HistoryDrawer";
 import { SvgIcon } from "~/components/ui/SvgIcon";
 
+// 风格分类列表，按组组织可选的视觉风格
 const STYLE_CATEGORIES = [
 	{
 		group: "2D 动画",
@@ -44,8 +46,10 @@ const STYLE_CATEGORIES = [
 	},
 ];
 
+// 默认风格
 const DEFAULT_STYLE = "anime";
 
+// 首页组件：输入故事创意，选择风格，上传参考图，创建新项目
 export function HomePage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();

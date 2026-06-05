@@ -1,3 +1,5 @@
+"""Phase2 工作流状态定义 — 阶段类型、状态字典、进度计算和运行时上下文"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -55,7 +57,7 @@ _CRITIQUE_TO_PRODUCED_STAGE: dict[str, str] = {
 
 
 def _resolve_base_stage(stage: str) -> str | None:
-    """Map any stage (production or approval or critique) to its production stage."""
+    """将任意阶段（生产/审批/审查）映射到其对应的生产阶段"""
     if stage in PRODUCTION_STAGE_SEQUENCE:
         return stage
     base = _APPROVAL_TO_PRODUCED_STAGE.get(stage)
@@ -65,6 +67,7 @@ def _resolve_base_stage(stage: str) -> str | None:
 
 
 def next_production_stage(stage: str | None) -> str | None:
+    """返回给定阶段之后的下一个生产阶段，若无后续则返回 None"""
     if not isinstance(stage, str):
         return None
     base = _resolve_base_stage(stage)
@@ -77,6 +80,7 @@ def next_production_stage(stage: str | None) -> str | None:
 
 
 def workflow_progress_for_stage(stage: str, *, within_stage: float = 0.0) -> float:
+    """根据阶段在生产序列中的位置计算整体工作流进度（0.0-1.0）"""
     base = _resolve_base_stage(stage)
     if base is None:
         return 0.0
@@ -88,6 +92,7 @@ def workflow_progress_for_stage(stage: str, *, within_stage: float = 0.0) -> flo
 
 
 class Phase2State(TypedDict, total=False):
+    """Phase2 工作流的 LangGraph 状态字典类型"""
     project_id: int
     run_id: int
     thread_id: str
@@ -107,6 +112,7 @@ class Phase2State(TypedDict, total=False):
 
 @dataclass(slots=True)
 class Phase2RuntimeContext:
+    """Phase2 运行时上下文，注入到 LangGraph 节点中供其访问编排器和 Agent 上下文"""
     orchestrator: Any
     agent_context: Any
     start_stage: Phase2Stage = "plan_outline"

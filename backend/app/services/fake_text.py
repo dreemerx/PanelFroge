@@ -1,3 +1,5 @@
+"""Fake 文本服务 — 本地测试用，不调用外部 API，根据请求自动返回结构化假数据。"""
+
 from __future__ import annotations
 
 import json
@@ -10,10 +12,9 @@ from app.services.text_capabilities import TextProviderCapability
 
 
 class FakeTextService:
-    """Local/dev text provider that never calls external APIs.
+    """本地/开发环境文本服务 — 根据请求上下文返回结构化假数据，不调用外部 API。
 
-    The fake provider is intentionally schema-aware for the built-in agents so
-    a complete local generation flow can be exercised without paid API calls.
+    内置对各 Agent 阶段的 schema 感知，可在本地完成完整的端到端生成流程。
     """
 
     def __init__(self, settings: Settings):
@@ -291,6 +292,7 @@ class FakeTextService:
         return "这是 Fake 文本 Provider 的本地测试响应，未调用外部文本生成 API。"
 
     async def probe(self) -> TextProviderCapability:
+        """探测 Fake 文本服务的可用性（始终返回有效）。"""
         return TextProviderCapability(status="valid", generate=True, stream=True)
 
     async def generate(
@@ -303,6 +305,18 @@ class FakeTextService:
         temperature: float | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
+        """生成假文本响应（非流式）。
+
+        Args:
+            messages: 消息列表
+            prompt: 提示词
+            system: 系统提示
+            max_tokens: 最大 token 数
+            temperature: 温度参数
+
+        Returns:
+            LLMResponse 对象
+        """
         text = self._response_text(messages=messages, prompt=prompt, system=system)
         return LLMResponse(text=text, tool_calls=[], raw={"provider": "fake"})
 
@@ -316,6 +330,18 @@ class FakeTextService:
         temperature: float | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
+        """流式生成假文本响应。
+
+        Args:
+            messages: 消息列表
+            prompt: 提示词
+            system: 系统提示
+            max_tokens: 最大 token 数
+            temperature: 温度参数
+
+        Yields:
+            事件字典：{"type": "text", ...} 和 {"type": "final", ...}
+        """
         response = await self.generate(
             messages=messages,
             prompt=prompt,

@@ -1,3 +1,5 @@
+"""项目管理 API 路由，包含项目的 CRUD、大纲管理、参考图上传及子资源查询。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,12 +39,14 @@ router = APIRouter()
 async def _project_provider_settings(
     project: Project, settings: Settings
 ) -> ProjectProviderSettingsRead:
+    """解析项目的 Provider 配置（仅缓存模式）。"""
     return (
         await resolve_project_provider_settings_async(project, settings, probe_mode="cache_only")
     ).as_project_provider_settings()
 
 
 async def _project_read_model(project: Project, settings: Settings) -> ProjectRead:
+    """将项目 ORM 对象转换为完整的读取 Schema。"""
     return ProjectRead(
         id=project.id if project.id is not None else 0,
         title=project.title,
@@ -76,6 +80,7 @@ async def create_project(
     session: AsyncSession = SessionDep,
     settings: Settings = SettingsDep,
 ):
+    """创建新项目，可选关联到宇宙。"""
     style = (payload.style or "").strip() or "anime"
     project = Project(
         title=payload.title,
@@ -117,6 +122,7 @@ async def create_project(
 
 @router.get("", response_model=ProjectListRead)
 async def list_projects(session: AsyncSession = SessionDep, settings: Settings = SettingsDep):
+    """列出所有项目，按创建时间倒序。"""
     project_created_at_col = cast(InstrumentedAttribute[datetime], cast(object, Project.created_at))
     res = await session.execute(select(Project).order_by(project_created_at_col.desc()))
     items = res.scalars().all()
@@ -132,12 +138,14 @@ async def get_project(
     session: AsyncSession = SessionDep,
     settings: Settings = SettingsDep,
 ):
+    """获取单个项目详情。"""
     project = await get_or_404(session, Project, project_id)
     return await _project_read_model(project, settings)
 
 
 @router.get("/{project_id}/outline", response_model=StoryOutlineRead | None)
 async def get_project_outline(project_id: int, session: AsyncSession = SessionDep):
+    """获取项目的故事大纲。"""
     project = await get_or_404(session, Project, project_id)
     if not isinstance(project.story_outline, dict):
         return None
@@ -150,6 +158,7 @@ async def update_project_outline(
     payload: StoryOutlineUpdate,
     session: AsyncSession = SessionDep,
 ):
+    """更新项目故事大纲及相关元数据。"""
     project = await get_or_404(session, Project, project_id)
     outline = dict(project.story_outline or {})
     data = payload.model_dump(exclude_unset=True)
@@ -177,6 +186,7 @@ async def update_project_outline(
 
 @router.get("/{project_id}/final-video")
 async def download_final_video(project_id: int, session: AsyncSession = SessionDep):
+    """下载项目最终合成视频文件。"""
     project = await get_or_404(session, Project, project_id, detail="Final video not found")
     if not project.video_url:
         raise HTTPException(status_code=404, detail="Final video not found")
@@ -196,6 +206,7 @@ async def update_project(
     session: AsyncSession = SessionDep,
     settings: Settings = SettingsDep,
 ):
+    """更新项目基本信息。"""
     project = await get_or_404(session, Project, project_id)
     data = payload.model_dump(exclude_unset=True)
     for k, v in data.items():
@@ -211,7 +222,7 @@ async def update_project(
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(project_id: int, session: AsyncSession = SessionDep):
-    """完全删除项目及所有关联数据（包括文件）"""
+    """完全删除项目及所有关联数据（包括文件）。"""
     await delete_project_by_id(session, project_id)
     return None
 
@@ -220,6 +231,7 @@ async def delete_project(project_id: int, session: AsyncSession = SessionDep):
 async def batch_delete_projects(
     payload: ProjectBatchDeleteRequest, session: AsyncSession = SessionDep
 ):
+    """批量删除多个项目。"""
     await delete_projects_by_ids(session, payload.ids)
     return None
 
@@ -230,6 +242,7 @@ async def upload_reference_image(
     file: UploadFile = File(...),
     session: AsyncSession = SessionDep,
 ):
+    """上传参考图到项目，返回图片 URL。"""
     import uuid
     from pathlib import Path
 
@@ -267,6 +280,7 @@ async def upload_reference_image(
 
 @router.get("/{project_id}/characters", response_model=list[CharacterRead])
 async def list_characters(project_id: int, session: AsyncSession = SessionDep):
+    """列出项目下所有角色。"""
     await get_or_404(session, Project, project_id)
     character_project_id_col = cast(InstrumentedAttribute[int], cast(object, Character.project_id))
     res = await session.execute(select(Character).where(character_project_id_col == project_id))
@@ -275,6 +289,7 @@ async def list_characters(project_id: int, session: AsyncSession = SessionDep):
 
 @router.get("/{project_id}/shots", response_model=list[ShotRead])
 async def list_shots(project_id: int, session: AsyncSession = SessionDep):
+    """列出项目下所有镜头，按顺序排列。"""
     await get_or_404(session, Project, project_id)
     shot_project_id_col = cast(InstrumentedAttribute[int], cast(object, Shot.project_id))
     shot_order_col = cast(InstrumentedAttribute[int], cast(object, Shot.order))
@@ -286,7 +301,7 @@ async def list_shots(project_id: int, session: AsyncSession = SessionDep):
 
 @router.get("/{project_id}/messages", response_model=list[MessageRead])
 async def list_messages(project_id: int, session: AsyncSession = SessionDep):
-    """获取项目的所有消息记录"""
+    """获取项目的所有消息记录。"""
     await get_or_404(session, Project, project_id)
     message_project_id_col = cast(InstrumentedAttribute[int], cast(object, Message.project_id))
     message_created_at_col = cast(InstrumentedAttribute[datetime], cast(object, Message.created_at))

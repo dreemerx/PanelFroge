@@ -1,8 +1,10 @@
+// 故事大纲预览卡片，展示大纲内容并支持确认或编辑后重新生成
 import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Button } from "~/components/ui/Button";
 import type { StoryOutline } from "~/types";
 
+// OutlinePreviewCard 组件的属性接口
 interface OutlinePreviewCardProps {
 	outline: StoryOutline;
 	visualBible?: string | null;
@@ -10,10 +12,12 @@ interface OutlinePreviewCardProps {
 	onRegenerate: (feedback: string) => void;
 }
 
+// 将大纲对象安全序列化为 JSON 字符串
 function safeJson(value: StoryOutline): string {
 	return JSON.stringify(value, null, 2);
 }
 
+// 故事大纲预览卡片组件：展示大纲详情，支持编辑和重新生成
 export function OutlinePreviewCard({
 	outline,
 	visualBible,

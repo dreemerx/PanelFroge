@@ -1,3 +1,5 @@
+"""风格模板 API 路由，管理内置和自定义画风模板的 CRUD。"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -18,6 +20,7 @@ router = APIRouter()
 
 
 async def _get_by_slug(session: AsyncSession, slug: str) -> StyleTemplate | None:
+    """根据 slug 查询风格模板。"""
     res = await session.execute(select(StyleTemplate).where(StyleTemplate.slug == slug))
     return res.scalar_one_or_none()
 
@@ -27,7 +30,7 @@ async def list_style_templates(
     session: AsyncSession = SessionDep,
     category: str | None = Query(default=None, description="Filter by category: builtin / custom"),
 ):
-    """List all active style templates, optionally filtered by category."""
+    """列出所有激活的风格模板，可按分类（builtin/custom）筛选。"""
     query = select(StyleTemplate).where(StyleTemplate.is_active.is_(True))
     if category is not None:
         query = query.where(StyleTemplate.category == category)
@@ -45,7 +48,7 @@ async def get_style_template(
     slug: str,
     session: AsyncSession = SessionDep,
 ):
-    """Get a single style template by slug."""
+    """根据 slug 获取单个风格模板。"""
     template = await _get_by_slug(session, slug)
     if not template:
         raise HTTPException(status_code=404, detail=f"Style template '{slug}' not found")
@@ -57,7 +60,7 @@ async def create_style_template(
     payload: StyleTemplateCreate,
     session: AsyncSession = SessionDep,
 ):
-    """Create a custom style template."""
+    """创建自定义风格模板。"""
     # Check slug uniqueness
     existing = await _get_by_slug(session, payload.slug)
     if existing:
@@ -89,7 +92,7 @@ async def update_style_template(
     payload: StyleTemplateUpdate,
     session: AsyncSession = SessionDep,
 ):
-    """Update a custom style template. Builtin templates cannot be modified."""
+    """更新自定义风格模板，内置模板不允许修改。"""
     template = await _get_by_slug(session, slug)
     if not template:
         raise HTTPException(status_code=404, detail=f"Style template '{slug}' not found")
@@ -113,7 +116,7 @@ async def delete_style_template(
     slug: str,
     session: AsyncSession = SessionDep,
 ):
-    """Delete a custom style template. Builtin templates cannot be deleted."""
+    """删除自定义风格模板，内置模板不允许删除。"""
     template = await _get_by_slug(session, slug)
     if not template:
         raise HTTPException(status_code=404, detail=f"Style template '{slug}' not found")

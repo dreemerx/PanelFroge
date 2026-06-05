@@ -1,3 +1,5 @@
+"""大纲 Agent — 将用户故事创意转化为三幕结构的故事大纲"""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +12,7 @@ from app.db.utils import utcnow
 
 
 def _clean_outline(data: dict[str, Any]) -> dict[str, Any]:
+    """清洗并规范化 LLM 返回的大纲数据结构"""
     outline = data.get("story_outline")
     if not isinstance(outline, dict):
         outline = {}
@@ -41,9 +44,12 @@ def _clean_outline(data: dict[str, Any]) -> dict[str, Any]:
 
 
 class OutlineAgent(BaseAgent):
+    """故事大纲生成 Agent，负责提炼三幕结构与视觉圣经"""
+
     name = "outline"
 
     async def run_outline(self, ctx: AgentContext) -> None:
+        """执行大纲生成流程：调用 LLM、清洗结果、保存到数据库并推送事件"""
         await self.send_message(ctx, "正在生成故事大纲...", progress=0.0, is_loading=True)
         await self.send_thinking(
             ctx,
@@ -125,4 +131,5 @@ class OutlineAgent(BaseAgent):
         )
 
     async def run(self, ctx: AgentContext) -> None:
+        """Agent 主入口，委托给 run_outline"""
         await self.run_outline(ctx)

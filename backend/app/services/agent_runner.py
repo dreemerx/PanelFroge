@@ -1,3 +1,5 @@
+"""Agent 计划执行器 — 按顺序运行 Agent 计划中的各阶段，管理进度和异常。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -19,11 +21,13 @@ from app.ws.manager import ConnectionManager
 
 
 def _next_stage(stage: str) -> str | None:
+    """获取当前阶段的下一个生产阶段。"""
     from app.orchestration.state import next_production_stage
     return next_production_stage(stage)
 
 
 def _final_stage_for_agents(agent_plan: list[Any], fallback: str = "plan") -> str:
+    """根据 Agent 计划推断最终阶段名称。"""
     last_name = getattr(agent_plan[-1], "name", None) if agent_plan else None
     return AGENT_STAGE_MAP.get(last_name or "", fallback)
 
@@ -37,6 +41,16 @@ async def run_agent_plan(
     ws: ConnectionManager,
     target_ids: TargetIds | None = None,
 ) -> None:
+    """执行 Agent 计划：按顺序运行各 Agent，推送进度事件，处理取消和异常。
+
+    Args:
+        project_id: 项目 ID
+        run_id: AgentRun ID
+        agent_plan: 待执行的 Agent 列表
+        settings: 应用配置
+        ws: WebSocket 连接管理器
+        target_ids: 可选的目标 ID（用于增量生成）
+    """
     final_stage = _final_stage_for_agents(agent_plan)
     try:
         async with async_session_maker() as session:

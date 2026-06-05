@@ -1,5 +1,7 @@
+// 前端核心类型定义，包含项目、角色、分镜、WebSocket 事件等所有数据模型
 import type React from "react";
 
+// 单个 AI 服务提供商的配置项（文本/图像/视频），包含来源、有效性和能力信息
 export interface ProjectProviderEntry {
 	selected_key: string;
 	source: "project" | "default";
@@ -14,18 +16,21 @@ export interface ProjectProviderEntry {
 	} | null;
 }
 
+// 项目 AI 服务提供商配置，包含文本、图像、视频三个通道的提供商设置
 export interface ProjectProviderSettings {
 	text: ProjectProviderEntry;
 	image: ProjectProviderEntry;
 	video: ProjectProviderEntry;
 }
 
+// 项目提供商覆盖配置请求体
 export interface ProjectProviderOverridesPayload {
 	text_provider_override?: string | null;
 	image_provider_override?: string | null;
 	video_provider_override?: string | null;
 }
 
+// 创建项目请求体
 export interface CreateProjectPayload extends ProjectProviderOverridesPayload {
 	title: string;
 	story?: string;
@@ -39,6 +44,7 @@ export interface CreateProjectPayload extends ProjectProviderOverridesPayload {
 	chapter_title?: string | null;
 }
 
+// 更新项目请求体，所有字段可选
 export type UpdateProjectPayload = Partial<
 	Pick<
 		Project,
@@ -58,12 +64,14 @@ export type UpdateProjectPayload = Partial<
 		ProjectProviderOverridesPayload
 >;
 
+// 故事大纲中的单个幕（Act）
 export interface StoryOutlineAct {
 	act: number;
 	title: string;
 	summary: string;
 }
 
+// 故事大纲，包含类型、主题、背景、基调和分幕结构
 export interface StoryOutline {
 	logline: string;
 	genre: string[];
@@ -74,6 +82,7 @@ export interface StoryOutline {
 	emotional_arc: string;
 }
 
+// 更新故事大纲请求体
 export interface StoryOutlineUpdatePayload {
 	logline?: string | null;
 	genre?: string[] | null;
@@ -87,7 +96,8 @@ export interface StoryOutlineUpdatePayload {
 	outline_approved?: boolean | null;
 }
 
-// Project types
+// 项目类型
+// 项目完整数据模型，包含元数据、故事内容、状态和关联配置
 export interface Project {
 	id: number;
 	title: string;
@@ -112,6 +122,7 @@ export interface Project {
 	chapter_title?: string | null;
 }
 
+// 角色数据模型，包含名称、描述、形象图和审批状态
 export interface Character {
 	id: number;
 	project_id: number;
@@ -129,6 +140,7 @@ export interface Character {
 	approved_image_url: string | null;
 }
 
+// 分镜数据模型，包含描述、提示词、图片/视频 URL 和审批状态
 export interface Shot {
 	id: number;
 	project_id: number;
@@ -169,8 +181,10 @@ export interface Shot {
 	approved_character_ids: number[];
 }
 
+// 审批状态：草稿、已批准、已过时
 export type ReviewState = "draft" | "approved" | "superseded";
 
+// 更新角色请求体
 export interface CharacterUpdatePayload {
 	name?: string | null;
 	description?: string | null;
@@ -179,6 +193,7 @@ export interface CharacterUpdatePayload {
 	reference_images?: string[] | null;
 }
 
+// 更新分镜请求体
 export interface ShotUpdatePayload {
 	order?: number | null;
 	description?: string | null;
@@ -197,8 +212,10 @@ export interface ShotUpdatePayload {
 	character_ids?: number[] | null;
 }
 
+// 版本管理实体类型：角色 或 分镜
 export type VersionEntityType = "character" | "shot";
 
+// 实体版本快照记录
 export interface ArtifactVersion {
 	id: number;
 	entity_type: VersionEntityType;
@@ -209,18 +226,21 @@ export interface ArtifactVersion {
 	created_at: string;
 }
 
+// 版本列表响应
 export interface VersionListRead {
 	entity_type: VersionEntityType;
 	entity_id: number;
 	versions: ArtifactVersion[];
 }
 
+// 版本差异项
 export interface VersionDiff {
 	field_name: string;
 	old_value: unknown;
 	new_value: unknown;
 }
 
+// 版本对比结果
 export interface VersionCompareRead {
 	entity_type: VersionEntityType;
 	entity_id: number;
@@ -229,18 +249,21 @@ export interface VersionCompareRead {
 	diffs: VersionDiff[];
 }
 
+// 版本回滚请求体
 export interface RollbackRequest {
 	entity_type: VersionEntityType;
 	entity_id: number;
 	target_version: number;
 }
 
+// 版本回滚响应
 export interface RollbackResponse {
 	success: boolean;
 	message: string;
 	new_version: ArtifactVersion | null;
 }
 
+// Agent 运行记录
 export interface AgentRun {
 	id: number;
 	project_id: number;
@@ -256,12 +279,14 @@ export interface AgentRun {
 	updated_at: string;
 }
 
+// 恢复阶段信息
 export interface RecoveryStageRead {
 	name: string;
 	status: "completed" | "current" | "pending" | "blocked";
 	artifact_count: number;
 }
 
+// 恢复摘要信息，记录运行进度和可恢复阶段
 export interface RecoverySummaryRead {
 	project_id: number;
 	run_id: number;
@@ -273,6 +298,7 @@ export interface RecoverySummaryRead {
 	resumable: boolean;
 }
 
+// 恢复控制信息，描述当前恢复状态和可用操作
 export interface RecoveryControlRead {
 	state: "active" | "recoverable";
 	detail: string;
@@ -282,6 +308,7 @@ export interface RecoveryControlRead {
 	recovery_summary: RecoverySummaryRead;
 }
 
+// 运行进度事件数据
 export interface RunProgressEventData {
 	run_id: number;
 	project_id?: number;
@@ -293,6 +320,7 @@ export interface RunProgressEventData {
 	recovery_summary?: RecoverySummaryRead | null;
 }
 
+// 运行等待确认事件数据
 export interface RunAwaitingConfirmEventData {
 	run_id: number;
 	project_id?: number;
@@ -312,6 +340,7 @@ export interface RunAwaitingConfirmEventData {
 	visual_bible?: string | null;
 }
 
+// 运行开始事件数据
 export interface RunStartedEventData {
 	run_id: number;
 	project_id?: number;
@@ -325,6 +354,7 @@ export interface RunStartedEventData {
 	preserved_stages?: string[];
 }
 
+// 运行完成事件数据
 export interface RunCompletedEventData {
 	run_id?: number;
 	project_id?: number;
@@ -334,6 +364,7 @@ export interface RunCompletedEventData {
 	video_generation_pending?: boolean | null;
 }
 
+// 运行失败事件数据
 export interface RunFailedEventData {
 	run_id?: number;
 	project_id?: number;
@@ -342,6 +373,7 @@ export interface RunFailedEventData {
 	current_stage?: string | null;
 }
 
+// 运行取消事件数据
 export interface RunCancelledEventData {
 	run_id?: number;
 	project_id?: number;
@@ -349,6 +381,7 @@ export interface RunCancelledEventData {
 	cancelled_count?: number;
 }
 
+// 运行确认事件数据
 export interface RunConfirmedEventData {
 	run_id: number;
 	project_id?: number;
@@ -361,6 +394,7 @@ export interface RunConfirmedEventData {
 	auto_mode?: boolean;
 }
 
+// 版本创建事件数据
 export interface VersionCreatedEventData {
 	entity_type: VersionEntityType;
 	entity_id: number;
@@ -368,6 +402,7 @@ export interface VersionCreatedEventData {
 	trigger: string;
 }
 
+// 版本回滚事件数据
 export interface VersionRollbackEventData {
 	entity_type: VersionEntityType;
 	entity_id: number;
@@ -375,7 +410,8 @@ export interface VersionRollbackEventData {
 	to_version: number;
 }
 
-// WebSocket event types
+// WebSocket 事件类型
+// WebSocket 事件类型联合
 export type WsEventType =
 	| "connected"
 	| "pong"
@@ -407,11 +443,13 @@ export type WsEventType =
 	| "export_completed"
 	| "consistency_eval_completed";
 
+// WebSocket 事件结构
 export interface WsEvent {
 	type: WsEventType;
 	data: Record<string, unknown>;
 }
 
+// 大纲更新事件数据
 export interface OutlineUpdatedEventData {
 	project_id: number;
 	story_outline: StoryOutline | null;
@@ -419,6 +457,7 @@ export interface OutlineUpdatedEventData {
 	outline_approved: boolean;
 }
 
+// 审查结果事件数据
 export interface CritiqueResultEventData {
 	score: number;
 	dimensions: Record<string, number>;
@@ -429,6 +468,7 @@ export interface CritiqueResultEventData {
 	will_regenerate: boolean;
 }
 
+// 角色圣经更新事件数据
 export interface BibleUpdatedEventData {
 	character_id: number;
 	visual_notes: boolean;
@@ -436,6 +476,7 @@ export interface BibleUpdatedEventData {
 	has_embedding: boolean;
 }
 
+// 音频生成完成事件数据
 export interface AudioGeneratedEventData {
 	shot_id: number;
 	tts_url: string | null;
@@ -443,6 +484,7 @@ export interface AudioGeneratedEventData {
 	duration: number | null;
 }
 
+// 导出响应
 export interface ExportResponse {
 	export_id: string;
 	project_id: number;
@@ -452,6 +494,7 @@ export interface ExportResponse {
 	created_at: string;
 }
 
+// 导出完成事件数据
 export interface ExportCompletedEventData {
 	export_id: string;
 	format: string;
@@ -460,6 +503,7 @@ export interface ExportCompletedEventData {
 	error: string | null;
 }
 
+// Agent 思考过程事件数据
 export interface AgentThinkingEventData {
 	agent: string;
 	phase: "reasoning" | "decision" | "planning" | "reviewing";
@@ -467,6 +511,7 @@ export interface AgentThinkingEventData {
 	details?: string | null;
 }
 
+// 角色圣经数据，包含视觉描述、参考图和人脸特征嵌入
 export interface CharacterBible {
 	character_id: number;
 	name: string;
@@ -477,6 +522,7 @@ export interface CharacterBible {
 	similarity_scores: Array<{ character_id: number; name: string; similarity: number }>;
 }
 
+// Agent 消息，用于前端消息列表展示
 export interface AgentMessage {
 	id?: string; // 唯一标识符（前端生成）
 	agent: string;
@@ -491,6 +537,7 @@ export interface AgentMessage {
 	details?: string | null; // 思考链补充详情
 }
 
+// 阻塞镜头信息，描述无法合成的镜头及原因
 export interface BlockingClip {
 	shot_id: number;
 	order: number;
@@ -498,6 +545,7 @@ export interface BlockingClip {
 	reason: string;
 }
 
+// 项目更新事件数据载荷
 export interface ProjectUpdatedPayload {
 	id: number;
 	title?: string | null;
@@ -521,6 +569,7 @@ export interface ProjectUpdatedPayload {
 	blocking_clips?: BlockingClip[] | null;
 }
 
+// 后端消息记录
 export interface Message {
 	id: number;
 	project_id: number;
@@ -543,7 +592,8 @@ export type WorkflowStage =
 	| "compose"
 	| "review";
 
-// Config types
+// 配置类型
+// 配置值类型，支持字符串、数字、布尔或空值
 export type ConfigValue = string | number | boolean | null;
 
 // 后端 API 返回的配置项格式
@@ -555,14 +605,17 @@ export interface ConfigItem {
 	source: "db" | "env" | "default";
 }
 
+// 配置分组
 export interface ConfigSection {
 	key: string;
 	title: string;
 	items: ConfigItem[];
 }
 
+// 应用完整配置（配置项数组）
 export type AppConfig = ConfigItem[];
 
+// Agent 名称映射表（英文标识 -> 中文显示名）
 export const AGENT_NAME_MAP: Record<string, string> = {
 	outline: "大纲",
 	plan: "规划",
@@ -573,6 +626,7 @@ export const AGENT_NAME_MAP: Record<string, string> = {
 	critic: "质量审查",
 };
 
+// 素材资产数据模型
 export interface Asset {
 	id: number;
 	name: string;
@@ -586,11 +640,13 @@ export interface Asset {
 	updated_at: string;
 }
 
+// 素材列表响应
 export interface AssetList {
 	items: Asset[];
 	total: number;
 }
 
+// 创建素材请求体
 export interface AssetCreatePayload {
 	name: string;
 	asset_type: "character" | "scene";
@@ -601,11 +657,13 @@ export interface AssetCreatePayload {
 	tags?: string | null;
 }
 
+// 风格模板列表响应
 export interface StyleTemplateList {
 	items: StyleTemplate[];
 	total: number;
 }
 
+// 风格模板数据模型，定义画面风格、配色和负面提示词
 export interface StyleTemplate {
 	id: number;
 	name: string;
@@ -622,6 +680,7 @@ export interface StyleTemplate {
 	updated_at: string;
 }
 
+// 创建风格模板请求体
 export interface StyleTemplateCreatePayload {
 	name: string;
 	slug: string;
@@ -632,6 +691,7 @@ export interface StyleTemplateCreatePayload {
 	preview_image_url?: string | null;
 }
 
+// 更新风格模板请求体
 export interface StyleTemplateUpdatePayload {
 	name?: string | null;
 	description?: string | null;
@@ -641,7 +701,8 @@ export interface StyleTemplateUpdatePayload {
 	preview_image_url?: string | null;
 }
 
-// Consistency Evaluation Types
+// 一致性评估类型
+// 人脸匹配详情
 export interface FaceMatchDetailRead {
 	shot_id: number;
 	shot_order: number;
@@ -649,6 +710,7 @@ export interface FaceMatchDetailRead {
 	detected: boolean;
 }
 
+// 角色一致性评估报告
 export interface CharacterConsistencyRead {
 	character_id: number;
 	character_name: string;
@@ -660,6 +722,7 @@ export interface CharacterConsistencyRead {
 	grade: string; // A/B/C/D/F
 }
 
+// 项目一致性评估结果
 export interface ProjectConsistencyRead {
 	project_id: number;
 	overall_score: number;
@@ -668,11 +731,13 @@ export interface ProjectConsistencyRead {
 	eval_id?: number;
 }
 
+// 一致性评估触发响应
 export interface ConsistencyEvalResponse {
 	eval_id: number;
 	status: string;
 }
 
+// 一致性评估报告
 export interface ConsistencyReportRead {
 	id: number;
 	project_id: number;
@@ -681,6 +746,7 @@ export interface ConsistencyReportRead {
 	report_data: ProjectConsistencyRead | null;
 }
 
+// 一致性评估完成事件数据
 export interface ConsistencyEvalCompletedEventData {
 	project_id: number;
 	overall_score: number;
@@ -689,6 +755,7 @@ export interface ConsistencyEvalCompletedEventData {
 
 // ── Universe / IP 宇宙 ──────────────────────────────────────
 
+// IP 宇宙数据模型，包含世界观设定和风格规则
 export interface Universe {
 	id: number;
 	name: string;
@@ -703,11 +770,13 @@ export interface Universe {
 	shared_characters_count: number;
 }
 
+// IP 宇宙详情（包含关联章节和共享角色）
 export interface UniverseDetail extends Universe {
 	chapters: UniverseProjectLinkRead[];
 	shared_characters: SharedCharacterRead[];
 }
 
+// 宇宙与项目的关联关系
 export interface UniverseProjectLinkRead {
 	id: number;
 	universe_id: number;
@@ -719,6 +788,7 @@ export interface UniverseProjectLinkRead {
 	project_title: string | null;
 }
 
+// 宇宙共享角色数据，跨项目复用的角色形象
 export interface SharedCharacterRead {
 	id: number;
 	universe_id: number;

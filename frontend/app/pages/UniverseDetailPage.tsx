@@ -1,3 +1,4 @@
+// 宇宙详情页，展示宇宙世界观、章节列表和共享角色库
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import {
 import { toast } from "~/utils/toast";
 import type { UniverseDetail, Project } from "~/types";
 
+// 宇宙详情页组件：查看世界观设定、管理章节项目和共享角色
 export function UniverseDetailPage() {
 	const { universeId } = useParams<{ universeId: string }>();
 	const queryClient = useQueryClient();

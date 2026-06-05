@@ -1,3 +1,5 @@
+"""Fake 图像服务 — 本地测试占位图，不调用外部 API。"""
+
 from __future__ import annotations
 
 import hashlib
@@ -65,12 +67,13 @@ def _placeholder_svg(prompt: str) -> str:
 
 
 class FakeImageService:
-    """Local/dev image provider that never calls external APIs."""
+    """本地/开发环境图像服务 — 生成 SVG 占位图，不调用外部 API。"""
 
     def __init__(self, settings: Settings):
         self.settings = settings
 
     async def generate(self, **kwargs: Any) -> dict[str, Any]:
+        """生成占位图，返回兼容 OpenAI 格式的响应。"""
         url = await self.generate_url(prompt=str(kwargs.get("prompt", "test")))
         return {"data": [{"url": url}], "provider": "fake"}
 
@@ -82,6 +85,16 @@ class FakeImageService:
         image_bytes: bytes | None = None,
         **kwargs: Any,
     ) -> str:
+        """生成 SVG 占位图并保存到本地，返回 URL。
+
+        Args:
+            prompt: 图片描述（用于生成唯一占位图）
+            size: 图片尺寸（未使用）
+            image_bytes: 参考图片字节流（未使用）
+
+        Returns:
+            占位图的本地 URL
+        """
         fixture_url = (self.settings.fake_image_fixture_url or "").strip()
         if fixture_url:
             return fixture_url
@@ -101,4 +114,5 @@ class FakeImageService:
         return f"/static/images/{DEFAULT_FAKE_IMAGE_FILENAME}"
 
     async def cache_external_image(self, url: str) -> str:
+        """直接返回原始 URL（Fake 模式不缓存）。"""
         return url

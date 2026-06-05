@@ -1,3 +1,5 @@
+"""风格模板相关的请求/响应 Schema。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class StyleTemplateRead(BaseModel):
+    """风格模板读取模型。"""
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -25,11 +28,13 @@ class StyleTemplateRead(BaseModel):
 
 
 class StyleTemplateListRead(BaseModel):
+    """风格模板列表读取模型。"""
     items: list[StyleTemplateRead]
     total: int
 
 
 class StyleTemplateCreate(BaseModel):
+    """创建风格模板的请求模型。"""
     name: str = Field(min_length=1)
     slug: str = Field(min_length=1, pattern=r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$")
     description: Optional[str] = None
@@ -40,6 +45,7 @@ class StyleTemplateCreate(BaseModel):
 
 
 class StyleTemplateUpdate(BaseModel):
+    """更新风格模板的请求模型。"""
     name: Optional[str] = Field(default=None, min_length=1)
     description: Optional[str] = None
     style_prompt: Optional[str] = Field(default=None, min_length=1)

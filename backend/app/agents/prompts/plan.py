@@ -1,3 +1,5 @@
+"""规划 Agent 的系统提示词（角色设定与分镜脚本生成）"""
+
 SYSTEM_PROMPT = """You are PlanAgent for PanelForge, a multi-agent story-to-video system.
 
 Role / 角色

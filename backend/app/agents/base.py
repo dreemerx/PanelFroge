@@ -1,3 +1,5 @@
+"""Agent 基类与共享上下文定义"""
+
 from __future__ import annotations
 
 import asyncio
@@ -48,6 +50,8 @@ class CompletionInfo:
 
 @dataclass
 class AgentContext:
+    """Agent 运行时上下文，包含项目、会话、服务引用及用户反馈等信息"""
+
     settings: Settings
     session: AsyncSession
     ws: ConnectionManager
@@ -67,6 +71,8 @@ class AgentContext:
 
 
 class BaseAgent:
+    """所有 Agent 的基类，提供消息推送、LLM 调用、图片生成等公共能力"""
+
     name: str = "base"
 
     async def send_message(
@@ -332,4 +338,9 @@ class BaseAgent:
         return final
 
     async def run(self, ctx: AgentContext) -> None:  # pragma: no cover
+        """Agent 主入口，子类必须实现
+
+        Args:
+            ctx: Agent 运行时上下文
+        """
         raise NotImplementedError

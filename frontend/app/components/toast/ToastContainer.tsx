@@ -1,6 +1,8 @@
+// 全局 Toast 通知容器，在页面右上角堆叠显示通知消息
 import { useToastStore } from "~/stores/toast.store";
 import { Toast } from "./Toast";
 
+// Toast 容器组件：从全局 store 读取通知并渲染
 export function ToastContainer() {
   const toasts = useToastStore((state) => state.toasts);
 

@@ -1,5 +1,7 @@
+// 打字机效果文本组件，逐字显示文本并支持流式文本扩展
 import { useEffect, useState, useRef, useCallback } from "react";
 
+// TypewriterText 组件的属性接口
 interface TypewriterTextProps {
   /** 要显示的文本 */
   text: string;

@@ -1,3 +1,4 @@
+// SVG 图标组件，基于 Lucide 图标的路径数据内联渲染
 const LUCIDE_PATHS: Record<string, string[]> = {
   "refresh-cw": [
     "M3 12a9 9 0 0 1 9-9a9.75 9.75 0 0 1 6.74 2.74L21 8",
@@ -80,14 +81,17 @@ const LUCIDE_PATHS: Record<string, string[]> = {
   ],
 };
 
+// 可用图标名称的类型
 export type IconName = keyof typeof LUCIDE_PATHS;
 
+// SvgIcon 组件的属性接口
 interface SvgIconProps {
   name: IconName;
   className?: string;
   size?: number;
 }
 
+// SVG 图标组件：通过名称引用内联路径渲染图标
 export function SvgIcon({ name, className, size = 16 }: SvgIconProps) {
   return (
     <svg

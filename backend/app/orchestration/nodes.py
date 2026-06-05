@@ -1,3 +1,5 @@
+"""Phase2 工作流节点 — 生产节点、审批节点、审查节点和路由函数的具体实现"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -58,19 +60,23 @@ _STAGE_TO_AGENT: dict[str, str] = {
 
 
 def _agent_name_for_stage(stage: str) -> str:
+    """根据阶段名称返回对应的 Agent 名称"""
     return _STAGE_TO_AGENT.get(stage, stage.split("_")[0])
 
 
 def _stage_key(stage: str) -> str:
+    """返回阶段在 artifact_lineage 中使用的键名"""
     return _STAGE_ARTIFACT_KEYS.get(stage, f"stage:{stage}")
 
 
 def _should_skip_stage(state: Phase2State, stage: str) -> bool:
+    """判断阶段是否已在 artifact_lineage 中（即已完成，应跳过）"""
     artifact_lineage = state.get("artifact_lineage") or []
     return _stage_key(stage) in artifact_lineage
 
 
 def _is_video_provider_invalid(run_snapshot: dict[str, Any] | None) -> bool:
+    """检查运行快照中视频服务商是否标记为无效"""
     if not isinstance(run_snapshot, dict):
         return False
     video_snapshot = run_snapshot.get("video")
@@ -80,6 +86,7 @@ def _is_video_provider_invalid(run_snapshot: dict[str, Any] | None) -> bool:
 
 
 def _get_run_provider_snapshot(agent_ctx: Any) -> dict[str, Any] | None:
+    """从 Agent 上下文中获取运行的 provider 快照"""
     if not hasattr(agent_ctx, "run"):
         return None
     run = getattr(agent_ctx, "run")
@@ -93,7 +100,7 @@ async def _run_sub_stage(
     stage: str,
     method_name: str,
 ) -> dict[str, Any]:
-    """Run a sub-stage of an agent and emit progress."""
+    """执行 Agent 子阶段，发送进度事件并返回状态更新"""
     agent_ctx = runtime.context.agent_context
     if stage == "compose_videos" and _is_video_provider_invalid(
         _get_run_provider_snapshot(agent_ctx)
@@ -175,6 +182,7 @@ def _approval_result(
     next_stage: str,
     feedback: str,
 ) -> dict[str, Any]:
+    """构建审批结果状态更新（含用户反馈时路由到 review）"""
     review_requested = bool(feedback)
     return {
         "current_stage": approval_stage,
@@ -188,6 +196,7 @@ def _approval_result(
 def _auto_approval_result(
     *, approval_stage: str, history_key: str, next_stage: str
 ) -> dict[str, Any]:
+    """构建自动审批结果状态更新（无用户交互）"""
     return {
         "current_stage": approval_stage,
         "approval_history": [history_key],
@@ -206,6 +215,7 @@ async def _manual_approval_node(
     message: str,
     next_stage: str,
 ) -> dict[str, Any]:
+    """手动审批节点：发送进度事件，通过 interrupt 等待用户确认或自动放行"""
     agent_ctx = runtime.context.agent_context
     orchestrator = runtime.context.orchestrator
 
@@ -249,6 +259,7 @@ async def _manual_approval_node(
 
 
 def _build_approval_message(agent_ctx: Any, fallback: str) -> str:
+    """从 Agent 上下文的 completion_info 构建审批提示消息"""
     ci = agent_ctx.completion_info
     if ci:
         parts = [ci.completed]
@@ -270,12 +281,14 @@ def _build_approval_message(agent_ctx: Any, fallback: str) -> str:
 async def plan_outline_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行故事大纲生成"""
     return await _run_sub_stage(state, runtime, stage="plan_outline", method_name="run_outline")
 
 
 async def plan_characters_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行角色设定生成"""
     return await _run_sub_stage(
         state, runtime, stage="plan_characters", method_name="run_characters"
     )
@@ -284,12 +297,14 @@ async def plan_characters_node(
 async def plan_shots_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行分镜脚本生成"""
     return await _run_sub_stage(state, runtime, stage="plan_shots", method_name="run_shots")
 
 
 async def render_characters_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行角色形象图渲染"""
     return await _run_sub_stage(
         state, runtime, stage="render_characters", method_name="run_characters"
     )
@@ -298,25 +313,28 @@ async def render_characters_node(
 async def render_shots_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行分镜首帧图片渲染"""
     return await _run_sub_stage(state, runtime, stage="render_shots", method_name="run_shots")
 
 
 async def compose_videos_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行分镜视频生成"""
     return await _run_sub_stage(state, runtime, stage="compose_videos", method_name="run_videos")
 
 
 async def compose_merge_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """生产节点：执行视频拼接"""
     return await _run_sub_stage(state, runtime, stage="compose_merge", method_name="run_merge")
 
 
 async def add_audio_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
-    """Add TTS dubbing and BGM to shot videos and final merged video."""
+    """生产节点：为分镜视频和最终视频添加 TTS 配音和 BGM"""
     return await _run_sub_stage(state, runtime, stage="add_audio", method_name="run_add_audio")
 
 
@@ -328,6 +346,7 @@ async def add_audio_node(
 async def outline_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认故事大纲"""
     agent_ctx = runtime.context.agent_context
     message = _build_approval_message(agent_ctx, "故事大纲已生成，请确认是否继续角色设计。")
     result = await _manual_approval_node(
@@ -365,6 +384,7 @@ async def outline_approval_node(
 async def characters_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认角色设定"""
     agent_ctx = runtime.context.agent_context
     message = _build_approval_message(agent_ctx, "角色设定已生成，请确认是否继续创建分镜。")
     return await _manual_approval_node(
@@ -380,6 +400,7 @@ async def characters_approval_node(
 async def shots_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认分镜脚本"""
     agent_ctx = runtime.context.agent_context
     message = _build_approval_message(agent_ctx, "分镜脚本已生成，请确认是否继续进入渲染阶段。")
     return await _manual_approval_node(
@@ -395,6 +416,7 @@ async def shots_approval_node(
 async def character_images_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认角色形象图"""
     agent_ctx = runtime.context.agent_context
     message = _build_approval_message(
         agent_ctx, "角色形象图已渲染完成，请确认是否继续渲染分镜画面。"
@@ -412,6 +434,7 @@ async def character_images_approval_node(
 async def shot_images_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认分镜画面"""
     agent_ctx = runtime.context.agent_context
     if _is_video_provider_invalid(_get_run_provider_snapshot(agent_ctx)):
         return _auto_approval_result(
@@ -436,6 +459,7 @@ async def shot_images_approval_node(
 async def compose_approval_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
+    """审批节点：等待用户确认最终视频合成结果"""
     agent_ctx = runtime.context.agent_context
     message = _build_approval_message(agent_ctx, "视频合成已完成，请确认最终效果。")
     return await _manual_approval_node(
@@ -456,7 +480,7 @@ async def compose_approval_node(
 async def critique_character_images_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
-    """Run critic review on character images after approval."""
+    """审查节点：对角色形象图执行 VLM 质量审查"""
     agent_ctx = runtime.context.agent_context
     settings = agent_ctx.settings
 
@@ -531,7 +555,7 @@ async def critique_character_images_node(
 async def critique_shot_images_node(
     state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 ) -> dict[str, Any]:
-    """Run critic review on shot images after approval."""
+    """审查节点：对分镜画面执行 VLM 质量审查"""
     agent_ctx = runtime.context.agent_context
     settings = agent_ctx.settings
 
@@ -602,12 +626,7 @@ async def critique_shot_images_node(
 
 
 def route_after_critique_character_images(state: Phase2State) -> str:
-    """Route after character image critique.
-
-    Uses route_stage set by the critique node:
-    - 'render_characters' if score < threshold and within max rounds
-    - 'render_shots' if quality OK or max rounds exceeded
-    """
+    """角色图片审查后的路由：低于阈值则重新渲染，否则继续分镜渲染"""
     route = state.get("route_stage")
     if route:
         return route
@@ -615,12 +634,7 @@ def route_after_critique_character_images(state: Phase2State) -> str:
 
 
 def route_after_critique_shot_images(state: Phase2State) -> str:
-    """Route after shot image critique.
-
-    Uses route_stage set by the critique node:
-    - 'render_shots' if score < threshold and within max rounds
-    - 'compose_videos' if quality OK or max rounds exceeded
-    """
+    """分镜图片审查后的路由：低于阈值则重新渲染，否则继续视频合成"""
     route = state.get("route_stage")
     if route:
         return route
@@ -633,6 +647,7 @@ def route_after_critique_shot_images(state: Phase2State) -> str:
 
 
 async def review_node(state: Phase2State, runtime: Runtime[Phase2RuntimeContext]) -> dict[str, Any]:
+    """审查节点：执行用户反馈审查，清理数据并路由到目标生产阶段"""
     orchestrator = runtime.context.orchestrator
     agent_ctx = runtime.context.agent_context
 
@@ -684,10 +699,12 @@ async def review_node(state: Phase2State, runtime: Runtime[Phase2RuntimeContext]
 
 
 def route_from_start(state: Phase2State) -> str:
+    """条件入口：根据 state 中的 current_stage 路由到起始节点"""
     return state.get("current_stage") or "plan_outline"
 
 
 def _route_after_approval(state: Phase2State, *, default_next: str) -> str:
+    """通用审批后路由：有反馈则路由到 review，否则继续下一阶段"""
     route = state.get("route_stage")
     if route:
         return route
@@ -697,46 +714,56 @@ def _route_after_approval(state: Phase2State, *, default_next: str) -> str:
 
 
 def route_after_outline_approval(state: Phase2State) -> str:
+    """大纲审批后路由"""
     return _route_after_approval(state, default_next="plan_characters")
 
 
 def route_after_characters_approval(state: Phase2State) -> str:
+    """角色设定审批后路由"""
     return _route_after_approval(state, default_next="plan_shots")
 
 
 def route_after_shots_approval(state: Phase2State) -> str:
+    """分镜脚本审批后路由"""
     return _route_after_approval(state, default_next="render_characters")
 
 
 def route_after_character_images_approval(state: Phase2State) -> str:
+    """角色形象图审批后路由"""
     return _route_after_approval(state, default_next="critique_character_images")
 
 
 def route_after_shot_images_approval(state: Phase2State) -> str:
+    """分镜画面审批后路由"""
     return _route_after_approval(state, default_next="critique_shot_images")
 
 
 def route_after_compose_videos(state: Phase2State) -> str:
+    """视频生成后路由：跳过或继续拼接"""
     if state.get("video_generation_skipped") or state.get("route_stage") == "__end__":
         return "__end__"
     return "compose_merge"
 
 
 def route_after_compose_merge(state: Phase2State) -> str:
+    """视频拼接后路由：跳过或继续音频处理"""
     if state.get("video_generation_skipped") or state.get("route_stage") == "__end__":
         return "__end__"
     return "add_audio"
 
 
 def route_after_compose_approval(state: Phase2State) -> str:
+    """合成审批后路由"""
     return _route_after_approval(state, default_next="__end__")
 
 
 def route_after_review(state: Phase2State) -> str:
+    """反馈审查后路由：跳转到目标生产阶段"""
     return state.get("route_stage") or "plan_characters"
 
 
 def _normalize_resume_value(value: Any) -> str:
+    """将 interrupt 的 resume 值标准化为反馈文本字符串"""
     if value is None:
         return ""
     if isinstance(value, str):

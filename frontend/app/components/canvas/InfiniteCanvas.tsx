@@ -1,3 +1,4 @@
+// 无限画布组件，基于 tldraw 实现项目内容的可视化编排和交互
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	createShapeId,
@@ -30,10 +31,12 @@ import { toast } from "~/utils/toast";
 import { ApiError } from "~/types/errors";
 import { ShapeContextMenu } from "./ShapeContextMenu";
 
+// InfiniteCanvas 组件的属性接口
 interface InfiniteCanvasProps {
 	projectId: number;
 }
 
+// tldraw 组件配置，隐藏默认 UI 元素
 const components: TLComponents = {
 	PageMenu: null,
 	MainMenu: null,
@@ -55,6 +58,7 @@ const components: TLComponents = {
 	ContextMenu: null,
 };
 
+// 受投影布局管理的 shape 类型集合
 const PROJECTED_SHAPE_TYPES = new Set([
 	"plan-section",
 	"character-section",
@@ -62,6 +66,7 @@ const PROJECTED_SHAPE_TYPES = new Set([
 	"compose-section",
 ]);
 
+// 已废弃的 shape 类型集合，加载时自动清理
 const STALE_SHAPE_TYPES = new Set([
 	"connector",
 	"ConnectorShape",
@@ -74,6 +79,7 @@ const WORKFLOW_ARROW_META = "panelforge-workflow-arrow";
 const MANUAL_POSITION_META = "manualPosition";
 const CARD_PADDING = 32;
 
+// shape 边界框接口
 interface ShapeBounds {
 	x: number;
 	y: number;
@@ -81,6 +87,7 @@ interface ShapeBounds {
 	h: number;
 }
 
+// 获取 shape 的宽高
 function getShapeSize(shape: TLShapePartial | TLShape): { w: number; h: number } {
 	const props = shape.props as { w?: number; h?: number } | undefined;
 	return {
@@ -89,6 +96,7 @@ function getShapeSize(shape: TLShapePartial | TLShape): { w: number; h: number }
 	};
 }
 
+// 将 shape 转换为边界框
 function toBounds(shape: TLShapePartial | TLShape): ShapeBounds {
 	const size = getShapeSize(shape);
 	return {
@@ -99,6 +107,7 @@ function toBounds(shape: TLShapePartial | TLShape): ShapeBounds {
 	};
 }
 
+// 检测两个边界框是否重叠
 function boundsOverlap(a: ShapeBounds, b: ShapeBounds): boolean {
 	return !(
 		a.x + a.w + CARD_PADDING <= b.x ||
@@ -108,6 +117,7 @@ function boundsOverlap(a: ShapeBounds, b: ShapeBounds): boolean {
 	);
 }
 
+// 判断 shape 是否被用户手动定位
 function isManualShape(
 	shape: TLShape | TLShapePartial | undefined,
 	lastProjected?: { x: number; y: number },
@@ -118,6 +128,7 @@ function isManualShape(
 	return shape.x !== lastProjected.x || shape.y !== lastProjected.y;
 }
 
+// 碰撞避免算法：将 shape 向下偏移直到不重叠
 function avoidCollisions(
 	desired: TLShapePartial,
 	occupied: ShapeBounds[],
@@ -134,6 +145,7 @@ function avoidCollisions(
 	return next;
 }
 
+// 解析 shape 布局：保留手动定位，自动排列其余
 function resolveShapeLayout(
 	desiredShapes: TLShapePartial[],
 	existingShapes: TLShape[],
@@ -158,6 +170,7 @@ function resolveShapeLayout(
 	return resolved;
 }
 
+// 比较现有 shape 和期望 shape 是否相同
 function shapesEqual(existing: TLShape, desired: TLShapePartial): boolean {
 	return (
 		existing.type === desired.type &&
@@ -168,16 +181,19 @@ function shapesEqual(existing: TLShape, desired: TLShapePartial): boolean {
 	);
 }
 
+// 从错误对象中提取错误消息
 function errorMessage(error: unknown, fallback: string): string {
 	if (error instanceof ApiError) return error.message;
 	if (error instanceof Error) return error.message;
 	return fallback;
 }
 
+// 生成工作流箭头的唯一 ID
 function workflowArrowId(fromId: TLShapeId, toId: TLShapeId): TLShapeId {
 	return createShapeId(`workflow-${fromId.replace("shape:", "")}-to-${toId.replace("shape:", "")}`);
 }
 
+// 同步工作流箭头：在各阶段卡片之间创建/更新/删除连线
 function syncWorkflowArrows(editor: Editor, cardShapes: TLShapePartial[]) {
 	const orderedCards = cardShapes.filter((shape) =>
 		PROJECTED_SHAPE_TYPES.has(shape.type ?? ""),
@@ -270,6 +286,7 @@ function syncWorkflowArrows(editor: Editor, cardShapes: TLShapePartial[]) {
 	if (bindingsToCreate.length > 0) editor.createBindings(bindingsToCreate);
 }
 
+// 无限画布组件：管理 shape 的创建、更新、布局和用户交互
 export function InfiniteCanvas({ projectId }: InfiniteCanvasProps) {
 	const queryClient = useQueryClient();
 	const editorRef = useRef<Editor | null>(null);

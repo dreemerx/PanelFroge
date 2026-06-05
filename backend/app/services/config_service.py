@@ -1,3 +1,5 @@
+"""配置服务 — 管理 .env 文件与数据库配置项的读写、脱敏和同步。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -93,12 +95,10 @@ def _load_env_file() -> dict[str, str]:
 
 
 def _load_process_env_values() -> dict[str, str]:
-    """Return runtime process env values for known Settings fields only.
+    """返回当前进程环境变量中已知 Settings 字段的值。
 
-    ConfigService historically read .env but ignored variables passed to the
-    running process (for example TEXT_PROVIDER=fake uvicorn ...). That made the
-    settings UI display stale defaults and test-connection overrides could then
-    accidentally blank out an effective runtime value.
+    ConfigService 历史上只读取 .env 文件，忽略了通过进程传入的变量
+    （例如 TEXT_PROVIDER=fake uvicorn ...），导致设置界面显示过期默认值。
     """
     data: dict[str, str] = {}
     for env_key in SETTINGS_ENV_FIELD_MAP:
@@ -114,6 +114,7 @@ def _load_effective_env_values() -> dict[str, str]:
     return values
 
 def is_sensitive_key(key: str) -> bool:
+    """判断配置项键名是否包含敏感信息关键词。"""
     lowered = key.lower()
     if lowered.endswith(("_key", "_token", "_secret", "_password")):
         return True
@@ -121,6 +122,7 @@ def is_sensitive_key(key: str) -> bool:
 
 
 def mask_value(value: str | None) -> str:
+    """对敏感值进行脱敏处理，仅保留首尾各 4 个字符。"""
     if not value:
         return MASK_VALUE
     trimmed = value.strip()
@@ -178,16 +180,24 @@ def _requires_restart(key: str) -> bool:
 
 @dataclass(slots=True)
 class ConfigUpdateResult:
+    """配置批量更新的结果摘要。"""
     updated: int
     skipped: int
     restart_keys: list[str]
 
 
 class ConfigService:
+    """配置管理服务 — 处理配置项的初始化、查询、更新和运行时覆盖。"""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def ensure_initialized(self) -> int:
+        """从 .env 文件初始化数据库中缺失的配置项。
+
+        Returns:
+            新创建的配置项数量
+        """
         env_values = _load_env_file()
         if not env_values:
             return 0
@@ -212,6 +222,11 @@ class ConfigService:
         return created
 
     async def list_effective(self) -> list[dict[str, Any]]:
+        """列出所有生效的配置项（合并数据库、.env 和 Settings 默认值）。
+
+        Returns:
+            配置项列表，包含 key、value（敏感值已脱敏）、source 等字段
+        """
         env_values = _load_effective_env_values()
         res = await self.session.execute(select(ConfigItem))
         items = res.scalars().all()
@@ -269,6 +284,7 @@ class ConfigService:
         return env_values.get(key.upper()) or env_values.get(key)
 
     async def build_settings_overrides(self) -> dict[str, Any]:
+        """从数据库配置项构建 Settings 覆盖字典。"""
         res = await self.session.execute(select(ConfigItem))
         items = res.scalars().all()
         overrides: dict[str, Any] = {}
@@ -281,11 +297,20 @@ class ConfigService:
         return overrides
 
     async def apply_settings_overrides(self) -> None:
+        """将数据库中的配置项覆盖应用到运行时 Settings。"""
         overrides = await self.build_settings_overrides()
         if overrides:
             apply_settings_overrides_to_runtime(overrides)
 
     async def upsert_configs(self, configs: dict[str, str | None]) -> ConfigUpdateResult:
+        """批量更新或插入配置项。
+
+        Args:
+            configs: 键值对字典，值为 None 表示跳过，空字符串表示删除
+
+        Returns:
+            更新结果摘要
+        """
         if not configs:
             return ConfigUpdateResult(updated=0, skipped=0, restart_keys=[])
         env_values = _load_env_file()

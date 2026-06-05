@@ -1,3 +1,5 @@
+"""Provider 解析服务 — 根据项目配置和系统设置解析文本/图像/视频 Provider 的可用性。"""
+
 from __future__ import annotations
 from typing import Literal, Protocol
 
@@ -14,6 +16,7 @@ from app.services.text_capabilities import (
 
 
 class ProjectProviderOverrides(Protocol):
+    """项目级 Provider 覆盖配置协议。"""
     text_provider_override: str | None
     image_provider_override: str | None
     video_provider_override: str | None
@@ -59,10 +62,10 @@ def settings_with_provider_snapshot(
     settings: Settings,
     provider_snapshot: dict[str, object] | None,
 ) -> Settings:
-    """Use snapshot selection as source of truth for settings.
+    """使用 Provider 快照覆盖 Settings 中的 Provider 选择。
 
-    text_provider, image_provider, and video_provider are copied from snapshot.selected_key directly,
-    without any fallback to current settings.
+    text_provider、image_provider、video_provider 直接从快照的 selected_key 复制，
+    不回退到当前 Settings。
     """
     snapshot = _provider_snapshot_payload(provider_snapshot)
     if snapshot is None:
@@ -117,6 +120,7 @@ def _text_credentials_available(provider_key: str | None, settings: Settings) ->
 
 
 async def probe_text_provider(settings: Settings) -> TextProviderCapability:
+    """探测文本 Provider 的可用性（带缓存）。"""
     cache_key = _text_probe_cache_key(settings)
     cached = get_cached_provider_capability(cache_key)
     if cached is not None:
@@ -149,6 +153,7 @@ async def probe_text_provider(settings: Settings) -> TextProviderCapability:
 
 
 def get_cached_text_provider_probe(settings: Settings) -> TextProviderCapability | None:
+    """获取缓存的文本 Provider 探测结果（不发起网络请求）。"""
     return get_cached_provider_capability(_text_probe_cache_key(settings))
 
 
@@ -249,6 +254,16 @@ def resolve_project_provider_settings(
     *,
     text_probe: TextProviderCapability | None = None,
 ) -> ProviderResolution:
+    """解析项目的 Provider 配置（同步版本，使用外部传入的探测结果）。
+
+    Args:
+        project: 项目 Provider 覆盖配置
+        settings: 应用配置
+        text_probe: 文本 Provider 探测结果
+
+    Returns:
+        Provider 解析结果
+    """
     text = _resolve_entry(
         override_key=project.text_provider_override,
         default_key=settings.text_provider,
@@ -294,6 +309,16 @@ async def resolve_project_provider_settings_async(
     *,
     probe_mode: Literal["live", "cache_only"] = "live",
 ) -> ProviderResolution:
+    """解析项目的 Provider 配置（异步版本，自动执行文本 Provider 探测）。
+
+    Args:
+        project: 项目 Provider 覆盖配置
+        settings: 应用配置
+        probe_mode: 探测模式（live 实时探测 / cache_only 仅缓存）
+
+    Returns:
+        Provider 解析结果
+    """
     selected_text_key = _normalize_provider_key(project.text_provider_override) or _normalize_provider_key(
         settings.text_provider
     )

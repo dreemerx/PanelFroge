@@ -1,3 +1,4 @@
+// 画布布局计算 Hook，根据项目数据和可见区域生成 tldraw Shape 配置
 import { useMemo } from "react";
 import { createShapeId, type TLShapePartial } from "tldraw";
 import { SHAPE_TYPES } from "~/components/canvas/shapes";
@@ -9,9 +10,12 @@ import type {
 } from "~/components/canvas/shapes";
 import type { BlockingClip, Character, Shot, WorkflowStage } from "~/types";
 
+// 画布分区键名：规划、渲染、合成
 type SectionKey = "plan" | "render" | "compose";
+// 分区状态：草稿、生成中、阻塞、完成
 type SectionState = "draft" | "generating" | "blocked" | "complete";
 
+// 画布布局配置，控制起始坐标、列间距和卡片宽度
 interface LayoutConfig {
 	startX: number;
 	startY: number;
@@ -53,6 +57,7 @@ const STORYBOARD_CARD_H = 420;
 const COMPOSE_CARD_H = 280;
 const RENDER_COLUMN_EXTRA_GAP = 80;
 
+// useCanvasLayout Hook 的入参
 interface UseCanvasLayoutProps {
 	projectId: number;
 	story: string | null;
@@ -70,6 +75,7 @@ interface UseCanvasLayoutProps {
 	config?: Partial<LayoutConfig>;
 }
 
+// 根据当前项目数据推导分区状态（草稿/生成中/阻塞/完成）
 function deriveSectionState(
 	key: SectionKey,
 	data: {
@@ -115,6 +121,7 @@ function deriveSectionState(
 	}
 }
 
+// 判断分区是否处于占位状态（尚无内容）
 function isPlaceholder(
 	key: SectionKey,
 	data: {
@@ -143,10 +150,12 @@ export {
 	SECTION_STATUS_LABELS,
 };
 
+// 画布布局计算结果
 export interface CanvasLayoutResult {
 	shapes: TLShapePartial[];
 }
 
+// 画布布局计算 Hook，返回各分区的 tldraw Shape 配置数组
 export function useCanvasLayout({
 	projectId,
 	story,

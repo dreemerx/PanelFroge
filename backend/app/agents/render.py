@@ -1,3 +1,5 @@
+"""渲染 Agent — 为角色和分镜生成 AI 图片"""
+
 from __future__ import annotations
 
 import json
@@ -24,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class RenderAgent(BaseAgent):
+    """角色与分镜图片渲染 Agent，负责调用图片生成 API 并保存结果"""
+
     name = "render"
 
     def __init__(self):
@@ -47,7 +51,7 @@ class RenderAgent(BaseAgent):
     }
 
     async def _lookup_style_template(self, session: "AsyncSession", style: str) -> StyleTemplate | None:
-        """Look up a StyleTemplate by slug from the database."""
+        """根据风格 slug 从数据库查找 StyleTemplate"""
         res = await session.execute(
             select(StyleTemplate).where(
                 StyleTemplate.slug == style,
@@ -57,14 +61,11 @@ class RenderAgent(BaseAgent):
         return res.scalar_one_or_none()
 
     def _style_descriptor(self, style: str) -> str:
-        """Synchronous fallback — used when no session is available."""
+        """同步回退：根据风格名称返回硬编码的风格描述词"""
         return self._FALLBACK_STYLE_MAP.get(style, self._FALLBACK_STYLE_MAP.get("anime"))
 
     async def _style_descriptor_async(self, session: "AsyncSession", style: str) -> tuple[str, str | None]:
-        """Look up StyleTemplate from DB and return (style_prompt, negative_prompt).
-
-        Falls back to hardcoded mapping if template not found.
-        """
+        """从数据库查找风格模板，返回 (style_prompt, negative_prompt)，未找到则回退到硬编码映射"""
         template = await self._lookup_style_template(session, style)
         if template:
             color_part = ", ".join(template.color_palette) if template.color_palette else ""
@@ -76,6 +77,7 @@ class RenderAgent(BaseAgent):
         return self._style_descriptor(style), None
 
     async def _build_character_prompt(self, character: Character, *, style: str, session: "AsyncSession") -> str:
+        """为单个角色构建图片生成 prompt（含描述、面部锚定和风格）"""
         desc = character.description or character.name
         # Inject visual_notes into the prompt if available
         if character.visual_notes:
@@ -88,6 +90,7 @@ class RenderAgent(BaseAgent):
         return prompt
 
     async def _build_shot_prompt(self, shot: Shot, characters: list[Character], *, style: str, session: "AsyncSession") -> str:
+        """为单个分镜构建图片生成 prompt（含场景描述、角色圣经和风格）"""
         desc = shot.image_prompt or shot.description
         parts = [desc.strip()]
         # Inject character bible text for each character
@@ -107,6 +110,7 @@ class RenderAgent(BaseAgent):
         return ", ".join(parts)
 
     async def _render_characters(self, ctx: AgentContext) -> int:
+        """并行渲染所有无图片的角色形象，返回成功数量"""
         query = select(Character).where(
             Character.project_id == ctx.project.id,
             Character.image_url.is_(None),
@@ -217,6 +221,7 @@ class RenderAgent(BaseAgent):
         return updated_count
 
     async def _render_shots(self, ctx: AgentContext) -> int:
+        """并行渲染所有无图片的分镜首帧，返回成功数量"""
         query = (
             select(Shot)
             .where(
@@ -349,7 +354,7 @@ class RenderAgent(BaseAgent):
         return updated_count
 
     async def run_characters(self, ctx: AgentContext) -> None:
-        """Render character images only (sub-step 1)."""
+        """渲染角色形象图（子步骤 1）"""
         await self.send_message(ctx, "开始生成角色形象图...", progress=0.0, is_loading=True)
         char_count = await self._render_characters(ctx)
         ctx.completion_info = CompletionInfo(
@@ -366,7 +371,7 @@ class RenderAgent(BaseAgent):
         )
 
     async def run_shots(self, ctx: AgentContext) -> None:
-        """Render shot storyboard images only (sub-step 2)."""
+        """渲染分镜首帧图片（子步骤 2）"""
         await self.send_message(ctx, "开始生成分镜首帧图...", progress=0.0, is_loading=True)
         shot_count = await self._render_shots(ctx)
         ctx.completion_info = CompletionInfo(
@@ -383,7 +388,7 @@ class RenderAgent(BaseAgent):
         )
 
     async def run(self, ctx: AgentContext) -> None:
-        """Legacy entry point — runs both sub-steps sequentially."""
+        """Agent 主入口，依次执行角色和分镜渲染"""
         await self.send_message(
             ctx,
             "开始渲染：先生成角色形象图，再使用角色图作为参考生成分镜图...",

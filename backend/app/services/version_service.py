@@ -1,3 +1,5 @@
+"""版本管理服务 — 为角色和分镜创建快照，支持版本历史和回滚。"""
+
 from __future__ import annotations
 
 from typing import Any, Iterable, Literal, cast
@@ -98,17 +100,17 @@ def _snapshot_from_fields(entity: Any, fields: Iterable[str]) -> dict[str, Any]:
 
 
 def character_snapshot(character: Character) -> dict[str, Any]:
-    """Build a JSON-safe Character snapshot."""
+    """构建角色的 JSON 安全快照。"""
     return _snapshot_from_fields(character, CHARACTER_SNAPSHOT_FIELDS)
 
 
 def shot_snapshot(shot: Shot) -> dict[str, Any]:
-    """Build a JSON-safe Shot snapshot."""
+    """构建分镜的 JSON 安全快照。"""
     return _snapshot_from_fields(shot, SHOT_SNAPSHOT_FIELDS)
 
 
 class VersionService:
-    """版本管理服务。"""
+    """版本管理服务 — 创建、查询和回滚实体版本快照。"""
 
     async def create_version(
         self,
@@ -119,7 +121,19 @@ class VersionService:
         run_id: int | None = None,
         trigger: str = "generation",
     ) -> ArtifactVersion:
-        """Create a version snapshot using max(version)+1 for the entity."""
+        """为实体创建版本快照（版本号自增）。
+
+        Args:
+            session: 数据库会话
+            entity_type: 实体类型（character / shot）
+            entity_id: 实体 ID
+            snapshot: 快照数据
+            run_id: 关联的 AgentRun ID
+            trigger: 触发来源（generation / rollback）
+
+        Returns:
+            创建的 ArtifactVersion 实例
+        """
         if entity_type not in ("character", "shot"):
             raise BusinessError("Unsupported entity type", code="INVALID_ENTITY_TYPE")
 
@@ -153,7 +167,7 @@ class VersionService:
     async def get_versions(
         self, session: AsyncSession, entity_type: EntityType, entity_id: int
     ) -> list[ArtifactVersion]:
-        """Return all versions for an entity, newest first."""
+        """获取实体的所有版本（按版本号降序）。"""
         entity_type_col = cast(InstrumentedAttribute[str], cast(object, ArtifactVersion.entity_type))
         entity_id_col = cast(InstrumentedAttribute[int], cast(object, ArtifactVersion.entity_id))
         version_col = cast(InstrumentedAttribute[int], cast(object, ArtifactVersion.version))
@@ -165,13 +179,13 @@ class VersionService:
         return list(result.scalars().all())
 
     async def get_version(self, session: AsyncSession, version_id: int) -> ArtifactVersion | None:
-        """Return a specific version snapshot."""
+        """根据版本 ID 获取单个版本快照。"""
         return await session.get(ArtifactVersion, version_id)
 
     async def get_version_by_number(
         self, session: AsyncSession, entity_type: EntityType, entity_id: int, version: int
     ) -> ArtifactVersion | None:
-        """Return an entity version by version number."""
+        """根据版本号获取实体的特定版本。"""
         entity_type_col = cast(InstrumentedAttribute[str], cast(object, ArtifactVersion.entity_type))
         entity_id_col = cast(InstrumentedAttribute[int], cast(object, ArtifactVersion.entity_id))
         version_col = cast(InstrumentedAttribute[int], cast(object, ArtifactVersion.version))
@@ -191,7 +205,17 @@ class VersionService:
         entity_id: int,
         target_version: int,
     ) -> ArtifactVersion:
-        """Rollback current entity fields to a target version and append a rollback version."""
+        """将实体回滚到指定版本，并追加一条回滚版本记录。
+
+        Args:
+            session: 数据库会话
+            entity_type: 实体类型
+            entity_id: 实体 ID
+            target_version: 目标版本号
+
+        Returns:
+            新创建的回滚版本记录
+        """
         target = await self.get_version_by_number(session, entity_type, entity_id, target_version)
         if target is None:
             raise NotFoundError("ArtifactVersion", target_version)
@@ -232,7 +256,7 @@ class VersionService:
         run_id: int | None = None,
         trigger: str = "generation",
     ) -> ArtifactVersion | None:
-        """Create a Character snapshot before mutation when entity is persisted."""
+        """在角色变更前自动创建快照。"""
         if character.id is None:
             return None
         return await self.create_version(
@@ -251,7 +275,7 @@ class VersionService:
         run_id: int | None = None,
         trigger: str = "generation",
     ) -> ArtifactVersion | None:
-        """Create a Shot snapshot before mutation when entity is persisted."""
+        """在分镜变更前自动创建快照。"""
         if shot.id is None:
             return None
         return await self.create_version(

@@ -1,3 +1,5 @@
+"""LangGraph 检查点持久化 — PostgreSQL 与内存两种后端"""
+
 from __future__ import annotations
 
 import asyncio
@@ -55,6 +57,7 @@ _BOOTSTRAP_STATEMENTS = (
 
 
 def _normalize_checkpointer_conn_string(database_url: str) -> str:
+    """将 SQLAlchemy 异步连接字符串转换为 LangGraph 检查点可用的格式"""
     if database_url.startswith("postgresql+asyncpg://"):
         return "postgresql://" + database_url.removeprefix("postgresql+asyncpg://")
     if database_url.startswith("postgres+asyncpg://"):
@@ -63,6 +66,7 @@ def _normalize_checkpointer_conn_string(database_url: str) -> str:
 
 
 async def ensure_postgres_checkpointer_setup(database_url: str) -> None:
+    """确保 PostgreSQL 检查点所需的表和索引已创建（幂等）"""
     if not database_url.startswith(("postgres://", "postgresql://", "postgresql+")):
         return
 
@@ -87,6 +91,7 @@ async def ensure_postgres_checkpointer_setup(database_url: str) -> None:
 
 @asynccontextmanager
 async def build_postgres_checkpointer(database_url: str) -> AsyncIterator[object]:
+    """构建检查点上下文管理器：PostgreSQL 或内存回退"""
     if database_url.startswith(("postgres://", "postgresql://", "postgresql+")):
         conn_str = _normalize_checkpointer_conn_string(database_url)
         async with AsyncPostgresSaver.from_conn_string(conn_str) as checkpointer:

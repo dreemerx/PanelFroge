@@ -1,3 +1,5 @@
+"""角色管理 API 路由，包含角色 CRUD、审批、重新生成及角色圣经维护。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -56,6 +58,7 @@ async def update_character(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """更新角色信息，并通过 WebSocket 通知前端。"""
     character = await get_or_404(session, Character, character_id)
 
     data = payload.model_dump(exclude_unset=True)
@@ -79,6 +82,7 @@ async def approve_character(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """审批通过角色，冻结当前版本为审批快照。"""
     character = await get_or_404(session, Character, character_id)
 
     character.freeze_approval()
@@ -106,6 +110,7 @@ async def regenerate_character(
     settings: Settings = SettingsDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """重新生成角色图像，支持自定义描述和参考图。"""
     if payload.type != "image":
         raise HTTPException(
             status_code=400, detail="Character regeneration only supports type=image"
@@ -200,6 +205,7 @@ async def delete_character(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
+    """删除角色及其关联图片文件。"""
     character = await get_or_404(session, Character, character_id)
 
     project_id = character.project_id
@@ -227,7 +233,7 @@ async def _send_bible_updated_event(
     character: Character,
     visual_notes_updated: bool = False,
 ) -> None:
-    """Send bible_updated WebSocket event."""
+    """发送角色圣经更新的 WebSocket 事件。"""
     await ws.send_event(
         character.project_id,
         {
@@ -247,7 +253,7 @@ async def get_character_bible(
     character_id: int,
     session: AsyncSession = SessionDep,
 ):
-    """Get character bible (visual_notes + reference_images + embedding similarity)."""
+    """获取角色圣经（视觉描述 + 参考图 + 嵌入向量相似度）。"""
     character = await get_or_404(session, Character, character_id)
 
     similarity_scores: list[dict[str, object]] = []
@@ -284,7 +290,7 @@ async def update_character_bible(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
-    """Update character bible (visual_notes / reference_images)."""
+    """更新角色圣经（视觉描述 / 参考图列表）。"""
     character = await get_or_404(session, Character, character_id)
 
     visual_notes_updated = False
@@ -323,7 +329,7 @@ async def add_reference_image(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
-    """Add a reference image URL to the character bible."""
+    """为角色圣经添加一张参考图 URL。"""
     character = await get_or_404(session, Character, character_id)
 
     images = list(character.reference_images or [])
@@ -357,7 +363,7 @@ async def delete_reference_image(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
-    """Delete a reference image by index."""
+    """按索引删除角色圣经中的参考图。"""
     character = await get_or_404(session, Character, character_id)
 
     images = list(character.reference_images or [])
@@ -384,7 +390,7 @@ async def compute_character_embedding(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ):
-    """Manually trigger embedding computation for a character."""
+    """手动触发角色人脸嵌入向量计算。"""
     character = await get_or_404(session, Character, character_id)
 
     # Use primary image_url, or first reference_image as fallback

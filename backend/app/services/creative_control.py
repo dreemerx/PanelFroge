@@ -1,3 +1,5 @@
+"""创意控制服务 — 管理审核状态、反馈目标推断、角色/分镜输出失效和重跑编辑。"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -26,6 +28,7 @@ def _sanitize_ids(values: Any) -> list[int]:
 
 
 async def build_review_state(session: AsyncSession, project: Project) -> dict[str, Any]:
+    """构建项目的审核状态快照（角色、分镜及其审批状态）。"""
     character_res = await session.execute(
         select(Character).where(Character.project_id == project.id)
     )
@@ -99,6 +102,7 @@ def _blocking_clip_reason(status: str) -> str:
 async def collect_project_blocking_clips(
     session: AsyncSession, project: Project
 ) -> list[dict[str, Any]]:
+    """收集项目中阻塞最终合并的分镜列表（视频缺失/生成中/失败）。"""
     if project.id is None:
         return []
 
@@ -154,6 +158,15 @@ async def collect_project_blocking_clips(
 
 
 def infer_feedback_targets(data: dict[str, Any], state: dict[str, Any]) -> TargetIds | None:
+    """从用户反馈中推断目标角色和分镜 ID。
+
+    Args:
+        data: 用户反馈数据
+        state: 当前项目审核状态
+
+    Returns:
+        推断出的目标 ID，无法推断则返回 None
+    """
     raw_target_ids = data.get("target_ids") if isinstance(data, dict) else None
     if isinstance(raw_target_ids, dict):
         character_ids = _sanitize_ids(raw_target_ids.get("character_ids"))
@@ -206,6 +219,7 @@ async def apply_character_rerun_edits(
     description: str | None = None,
     image_url: str | None = None,
 ) -> Character:
+    """应用角色重跑时的编辑（更新描述或图片）。"""
     if description is not None:
         character.description = description
     if image_url is not None:
@@ -221,6 +235,7 @@ async def invalidate_character_downstream_outputs(
     project: Project,
     character_id: int,
 ) -> None:
+    """使角色的下游输出（分镜图片/视频、项目视频）失效。"""
     res = await session.execute(select(Shot).where(Shot.project_id == project.id))
     shots = list(res.scalars().all())
     for shot in shots:
@@ -243,6 +258,7 @@ async def invalidate_shot_storyboard_outputs(
     project: Project,
     shot: Shot,
 ) -> None:
+    """使分镜的故事板输出（图片/视频）失效。"""
     delete_file(shot.image_url)
     delete_file(shot.video_url)
     shot.image_url = None
@@ -258,6 +274,7 @@ async def invalidate_shot_clip_output(
     session: AsyncSession,
     project: Project,
 ) -> None:
+    """使项目最终合成视频失效（标记为 superseded）。"""
     if project.video_url:
         project.status = "superseded"
     session.add(project)

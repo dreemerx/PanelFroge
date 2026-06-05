@@ -1,3 +1,5 @@
+"""文本服务工厂 — 根据配置创建 Anthropic / OpenAI 兼容 / Fake 文本服务。"""
+
 from __future__ import annotations
 
 from typing import Protocol

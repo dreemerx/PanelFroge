@@ -1,3 +1,4 @@
+// 项目详情页，展示项目编辑器、阶段管线、聊天面板及资产/历史抽屉
 import { ArrowPathIcon, StopIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +26,7 @@ import { ApiError } from "~/types/errors";
 import { toast } from "~/utils/toast";
 import { isWorkflowStage } from "~/utils/workflowStage";
 
+// 项目详情页组件：管理项目生成流程、WebSocket 通信、版本对比等
 export function ProjectPage() {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();

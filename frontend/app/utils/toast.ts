@@ -1,6 +1,8 @@
+// Toast 通知便捷调用工具，提供 success/error/warning/info 四种快捷方法
 import { useToastStore } from "~/stores/toast.store";
 import type { ToastAction } from "~/types/errors";
 
+// Toast 选项接口
 interface ToastOptions {
   title: string;
   message: string;

@@ -1,3 +1,4 @@
+// 角色设计区域 shape 工具类，展示角色卡片网格并支持审查操作
 import {
 	HTMLContainer,
 	Rectangle2d,
@@ -20,6 +21,7 @@ import { SvgIcon } from "~/components/ui/SvgIcon";
 import { useDomSize, getShapeSize } from "~/hooks/useDomSize";
 import { useState, useCallback } from "react";
 
+// 角色卡片组件：展示角色图片、名称、审查状态，支持编辑/重新生成/批准等操作
 function CharacterCard({ char }: { char: ReviewedCharacter }) {
 	const isApproved = char.approval_state === "approved";
 	const currentImage = getStaticUrl(char.image_url);
@@ -157,6 +159,7 @@ function CharacterCard({ char }: { char: ReviewedCharacter }) {
 	);
 }
 
+// 角色圣经面板：管理视觉特征描述、参考图和人脸嵌入
 function BiblePanel({
 	characterId,
 	initialVisualNotes,
@@ -324,6 +327,7 @@ function BiblePanel({
 	);
 }
 
+// 角色设计区域 shape 工具类
 export class CharacterSectionShapeUtil extends ShapeUtil<CharacterSectionShape> {
 	static override type = "character-section" as const;
 

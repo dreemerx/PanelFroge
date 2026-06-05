@@ -1,7 +1,10 @@
+// Provider 选择字段组件，为文本/图像/视频服务分别提供单选配置
 import type { ProjectProviderOverridesPayload } from "~/types";
 
+// 服务模态类型
 type ProviderModality = "text" | "image" | "video";
 
+// 单个 Provider 字段的配置结构
 interface ProviderFieldConfig {
   modality: ProviderModality;
   title: string;
@@ -12,6 +15,7 @@ interface ProviderFieldConfig {
 
 type ProviderDefaultKeys = Record<ProviderModality, string>;
 
+// ProviderSelectionFields 组件的属性接口
 interface ProviderSelectionFieldsProps {
   value: ProjectProviderOverridesPayload;
   onChange: (next: ProjectProviderOverridesPayload) => void;
@@ -63,6 +67,7 @@ const FALLBACK_DEFAULT_KEYS: ProviderDefaultKeys = {
   video: "openai",
 };
 
+// 获取 Provider 的显示名称
 function getProviderLabel(key: string): string {
   switch (key) {
     case "anthropic":
@@ -78,6 +83,7 @@ function getProviderLabel(key: string): string {
   }
 }
 
+// Provider 选择字段组件：为文本/图像/视频分别配置服务提供商
 export function ProviderSelectionFields({
   value,
   onChange,

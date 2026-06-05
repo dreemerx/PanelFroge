@@ -1,3 +1,4 @@
+// 画布 shape 右键上下文菜单，支持重新规划、修改故事等操作
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, type TLShapeId } from "tldraw";
 import { projectsApi } from "~/services/api";
@@ -6,17 +7,20 @@ import { toast } from "~/utils/toast";
 import { ConfirmModal } from "~/components/ui/ConfirmModal";
 import { SHAPE_TYPES } from "./shapes/types";
 
+// 菜单位置接口
 interface MenuPosition {
 	x: number;
 	y: number;
 }
 
+// 右键菜单的 shape 上下文信息
 interface ShapeContext {
 	shapeType: string;
 	shapeId: string;
 	feedbackType: "plan" | "render" | "compose";
 }
 
+// 各 shape 类型对应的右键菜单操作列表
 const ACTIONS: Record<string, { label: string; action: string }[]> = {
 	[SHAPE_TYPES.STORYBOARD_BOARD]: [
 		{ label: "重新规划", action: "regenerate" },
@@ -38,6 +42,7 @@ const ACTIONS: Record<string, { label: string; action: string }[]> = {
 	],
 };
 
+// shape 类型到反馈类型的映射
 const SHAPE_TO_ENTITY: Record<
 	string,
 	{ feedbackType: "plan" | "render" | "compose" }
@@ -49,6 +54,7 @@ const SHAPE_TO_ENTITY: Record<
 	[SHAPE_TYPES.COMPOSE_SECTION]: { feedbackType: "compose" },
 };
 
+// 右键上下文菜单组件：根据选中 shape 类型显示不同操作
 export function ShapeContextMenu() {
 	const editor = useEditor();
 	const currentRunId = useEditorStore((state) => state.currentRunId);

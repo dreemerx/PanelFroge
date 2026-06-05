@@ -1,3 +1,5 @@
+"""审查 Agent 的系统提示词（角色与分镜图像质量审查）"""
+
 from __future__ import annotations
 
 CHARACTER_REVIEW_SYSTEM_PROMPT = """\

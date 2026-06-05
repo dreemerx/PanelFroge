@@ -1,3 +1,5 @@
+"""版本管理 API 路由，提供制品版本查询、回滚和版本对比功能。"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
@@ -22,6 +24,7 @@ version_service = VersionService()
 
 
 def _diff_snapshots(old: dict, new: dict) -> list[VersionDiff]:
+    """对比两个快照字典，返回有差异的字段列表。"""
     fields = sorted(set(old.keys()) | set(new.keys()))
     return [
         VersionDiff(field_name=field, old_value=old.get(field), new_value=new.get(field))
@@ -37,6 +40,7 @@ async def list_versions(
     entity_id: int = Query(...),
     session: AsyncSession = SessionDep,
 ) -> VersionListRead:
+    """列出指定实体的所有版本记录。"""
     versions = await version_service.get_versions(session, entity_type, entity_id)
     versions = [version for version in versions if version.project_id == project_id]
     return VersionListRead(entity_type=entity_type, entity_id=entity_id, versions=versions)
@@ -44,6 +48,7 @@ async def list_versions(
 
 @router.get("/versions/{version_id}", response_model=ArtifactVersionRead)
 async def get_version(version_id: int, session: AsyncSession = SessionDep) -> ArtifactVersionRead:
+    """根据版本 ID 获取单个版本详情。"""
     version = await version_service.get_version(session, version_id)
     if version is None:
         raise HTTPException(status_code=404, detail="Version not found")
@@ -56,6 +61,7 @@ async def rollback_version(
     session: AsyncSession = SessionDep,
     ws: ConnectionManager = WsManagerDep,
 ) -> RollbackResponse:
+    """回滚实体到指定版本，并通过 WebSocket 通知前端。"""
     current_versions = await version_service.get_versions(
         session, payload.entity_type, payload.entity_id
     )
@@ -128,6 +134,7 @@ async def compare_versions(
     v2: int = Query(..., ge=1),
     session: AsyncSession = SessionDep,
 ) -> VersionCompareRead:
+    """对比同一实体的两个版本，返回字段级差异。"""
     from_version = await version_service.get_version_by_number(session, entity_type, entity_id, v1)
     to_version = await version_service.get_version_by_number(session, entity_type, entity_id, v2)
     if from_version is None or to_version is None:

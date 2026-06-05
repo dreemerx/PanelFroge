@@ -1,3 +1,5 @@
+"""Phase2 工作流图定义 — 基于 LangGraph 构建生产、审批、审查节点与边"""
+
 from __future__ import annotations
 
 from langgraph.graph import END, StateGraph
@@ -7,6 +9,7 @@ from .state import Phase2State
 
 
 def build_phase2_graph() -> StateGraph:
+    """构建 Phase2 LangGraph 状态图，包含所有生产节点、审批门、审查节点及其边"""
     graph = StateGraph(Phase2State)
 
     # ---- Production nodes ----

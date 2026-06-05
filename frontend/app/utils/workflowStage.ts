@@ -1,5 +1,7 @@
+// 工作流阶段工具函数，处理后端细粒度阶段名称到前端简化名称的映射
 import type { WorkflowStage } from "~/types";
 
+// 工作流阶段顺序定义
 export const WORKFLOW_STAGE_SEQUENCE: WorkflowStage[] = [
 	"plan",
 	"plan_approval",
@@ -20,11 +22,8 @@ const WORKFLOW_STAGE_UNLOCK_RANK: Record<WorkflowStage, number> = {
 	review: -1,
 };
 
-/**
- * Backend sends granular Phase2Stage names (e.g. "plan_characters",
- * "render_shots", "compose_merge").  Frontend UI uses simplified names.
- * This map collapses any granular or simplified name to the UI-level name.
- */
+// 后端发送细粒度阶段名（如 "plan_characters"、"render_shots"、"compose_merge"），
+// 前端 UI 使用简化名称，此映射表将所有细粒度名称归并为 UI 级别名称
 const GRANULAR_TO_SIMPLIFIED: Record<string, WorkflowStage> = {
 	// plan phase
 	plan_outline: "plan",
@@ -54,26 +53,20 @@ const GRANULAR_TO_SIMPLIFIED: Record<string, WorkflowStage> = {
 	review: "review",
 };
 
-/**
- * Resolve any stage string (granular backend name or simplified UI name)
- * to the simplified WorkflowStage used by the UI.  Returns `undefined`
- * for completely unknown values.
- */
+// 将任意阶段字符串（后端细粒度名称或前端简化名称）解析为 UI 使用的简化 WorkflowStage
 export function toSimplifiedStage(value: unknown): WorkflowStage | undefined {
 	if (typeof value !== "string") return undefined;
 	return GRANULAR_TO_SIMPLIFIED[value];
 }
 
+// 判断值是否为合法的 WorkflowStage
 export function isWorkflowStage(value: unknown): value is WorkflowStage {
 	return (
 		typeof value === "string" && WORKFLOW_STAGE_SET.has(value as WorkflowStage)
 	);
 }
 
-/**
- * Resolve a stage from WS event data.  Tries `stage` then `current_stage`,
- * mapping granular backend names to simplified UI names.
- */
+// 从 WebSocket 事件数据中解析阶段，优先取 stage 字段，其次 current_stage 字段
 export function resolveEventStage(
 	data: Record<string, unknown>,
 ): WorkflowStage | undefined {
@@ -81,6 +74,7 @@ export function resolveEventStage(
 	return toSimplifiedStage(raw);
 }
 
+// 获取工作流阶段的解锁等级（用于判断是否已推进到某阶段）
 export function getWorkflowStageUnlockRank(
 	stage: string | null | undefined,
 ): number {
@@ -91,6 +85,7 @@ export function getWorkflowStageUnlockRank(
 	return WORKFLOW_STAGE_UNLOCK_RANK[stage];
 }
 
+// 获取工作流阶段的显示标题和描述文本
 export function getWorkflowStageInfo(stage: WorkflowStage): {
 	title: string;
 	description: string;

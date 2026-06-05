@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class UniverseCreate(BaseModel):
+    """创建 IP 宇宙的请求模型。"""
     name: str = Field(min_length=1, max_length=200)
     description: str | None = None
     world_setting: str | None = None
@@ -16,6 +17,7 @@ class UniverseCreate(BaseModel):
 
 
 class UniverseUpdate(BaseModel):
+    """更新 IP 宇宙的请求模型。"""
     name: str | None = None
     description: str | None = None
     world_setting: str | None = None
@@ -25,6 +27,7 @@ class UniverseUpdate(BaseModel):
 
 
 class UniverseProjectLinkCreate(BaseModel):
+    """将项目关联到宇宙的请求模型。"""
     project_id: int
     chapter_number: int | None = None
     chapter_title: str | None = None
@@ -32,6 +35,7 @@ class UniverseProjectLinkCreate(BaseModel):
 
 
 class UniverseProjectLinkRead(BaseModel):
+    """宇宙-项目关联读取模型。"""
     id: int
     universe_id: int
     project_id: int
@@ -46,6 +50,7 @@ class UniverseProjectLinkRead(BaseModel):
 
 
 class SharedCharacterRead(BaseModel):
+    """共享角色读取模型。"""
     id: int
     universe_id: int
     name: str
@@ -93,6 +98,7 @@ class SharedCharacterManualCreate(BaseModel):
 
 
 class UniverseRead(BaseModel):
+    """IP 宇宙读取模型。"""
     id: int
     name: str
     description: str | None = None

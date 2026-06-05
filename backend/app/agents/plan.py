@@ -1,3 +1,5 @@
+"""规划 Agent — 根据已确认大纲生成角色设定和分镜脚本"""
+
 from __future__ import annotations
 
 import json
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def _outline_context(project: Any) -> dict[str, Any] | None:
+    """若项目大纲已确认，返回大纲上下文字典供 LLM 使用"""
     if not getattr(project, "outline_approved", False):
         return None
     outline = getattr(project, "story_outline", None)
@@ -30,6 +33,7 @@ def _outline_context(project: Any) -> dict[str, Any] | None:
 
 
 def _characters_context(characters: list[Character]) -> list[dict[str, Any]]:
+    """将角色列表转换为 LLM 可读的上下文字典列表"""
     return [
         {
             "id": character.id,
@@ -42,6 +46,7 @@ def _characters_context(characters: list[Character]) -> list[dict[str, Any]]:
 
 
 def _character_to_description(item: dict) -> str:
+    """从 LLM 返回的角色数据中提取并拼接描述文本"""
     parts: list[str] = []
     for key in ["personality_traits", "goals", "fears", "voice_notes", "costume_notes"]:
         value = item.get(key)
@@ -60,7 +65,7 @@ def _character_to_description(item: dict) -> str:
 
 
 def _extract_visual_notes(item: dict) -> str | None:
-    """Extract visual_notes from the plan LLM output for a character."""
+    """从规划 LLM 输出中提取角色的视觉特征描述"""
     vn = item.get("visual_notes")
     if isinstance(vn, str) and vn.strip():
         return vn.strip()
@@ -68,6 +73,7 @@ def _extract_visual_notes(item: dict) -> str | None:
 
 
 def _compose_image_prompt(shot_data: dict, visual_bible: str) -> str:
+    """根据分镜数据和视觉圣经合成图片生成 prompt"""
     if isinstance(shot_data.get("image_prompt"), str) and shot_data["image_prompt"].strip():
         return shot_data["image_prompt"].strip()
 
@@ -98,6 +104,7 @@ def _compose_image_prompt(shot_data: dict, visual_bible: str) -> str:
 
 
 def _compose_video_prompt(shot_data: dict) -> str:
+    """根据分镜数据合成视频生成 prompt"""
     if isinstance(shot_data.get("video_prompt"), str) and shot_data["video_prompt"].strip():
         return shot_data["video_prompt"].strip()
 
@@ -116,16 +123,19 @@ def _compose_video_prompt(shot_data: dict) -> str:
 
 
 def _optional_text(value: Any) -> str | None:
+    """将非空字符串值返回，否则返回 None"""
     return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _optional_float(value: Any) -> float | None:
+    """将正数值返回为 float，否则返回 None"""
     if isinstance(value, (int, float)) and value > 0:
         return float(value)
     return None
 
 
 def _resolve_shot_character_ids(shot_data: dict, characters: list[Character]) -> list[int]:
+    """从分镜数据中解析关联的角色 ID 列表（按 ID、名称、文本提及依次尝试）"""
     valid_ids = {character.id for character in characters if character.id is not None}
     raw_ids = shot_data.get("character_ids")
     if isinstance(raw_ids, list):
@@ -154,6 +164,7 @@ def _resolve_shot_character_ids(shot_data: dict, characters: list[Character]) ->
 def _shot_fields(
     ctx: AgentContext, shot_data: dict, visual_bible: str, characters: list[Character]
 ) -> dict[str, Any]:
+    """从 LLM 分镜数据构建 Shot 模型所需的字段字典"""
     image_prompt = _compose_image_prompt(shot_data, visual_bible)
     video_prompt = _compose_video_prompt(shot_data)
     motion_note = _optional_text(shot_data.get("motion_note")) or video_prompt
@@ -178,6 +189,8 @@ def _shot_fields(
 
 
 class PlanAgent(BaseAgent):
+    """角色与分镜规划 Agent，负责生成角色设定和分镜脚本"""
+
     name = "plan"
 
     def __init__(self):
@@ -185,7 +198,7 @@ class PlanAgent(BaseAgent):
         self.version_service = VersionService()
 
     async def _get_universe_context(self, ctx: AgentContext) -> dict | None:
-        """If project belongs to a universe, return universe context for LLM."""
+        """若项目属于某个 IP 宇宙，返回宇宙上下文供 LLM 参考"""
         if not getattr(ctx.project, "universe_id", None):
             return None
         try:
@@ -223,6 +236,7 @@ class PlanAgent(BaseAgent):
             return None
 
     async def _get_existing_state(self, ctx: AgentContext) -> dict[str, Any]:
+        """获取当前项目已有的角色和分镜状态，用于增量模式"""
         char_res = await ctx.session.execute(
             select(Character).where(Character.project_id == ctx.project.id)
         )
@@ -255,6 +269,7 @@ class PlanAgent(BaseAgent):
     async def _apply_incremental_changes(
         self, ctx: AgentContext, data: dict, visual_bible: str
     ) -> tuple[int, int]:
+        """应用增量变更：按 preserve_ids 保留指定项，删除其余，新增/更新 LLM 返回的项"""
         preserve_ids = data.get("preserve_ids") or {}
         preserve_char_ids = set(preserve_ids.get("characters") or [])
         preserve_shot_ids = set(preserve_ids.get("shots") or [])
@@ -446,7 +461,7 @@ class PlanAgent(BaseAgent):
         task: str,
         characters: list[Character] | None = None,
     ) -> dict[str, Any]:
-        """Call LLM for one planning sub-task and cache the result in ctx."""
+        """调用 LLM 执行规划子任务（characters 或 shots），结果缓存到 ctx.plan_data"""
         is_incremental = ctx.rerun_mode == "incremental"
         payload: dict[str, Any] = {
             "project": {
@@ -514,6 +529,7 @@ class PlanAgent(BaseAgent):
         return data
 
     async def run_characters(self, ctx: AgentContext) -> None:
+        """执行角色设定生成流程（全量或增量）"""
         is_incremental = ctx.rerun_mode == "incremental"
         if is_incremental:
             await self.send_message(ctx, "正在增量更新角色...", progress=0.0, is_loading=True)
@@ -626,6 +642,7 @@ class PlanAgent(BaseAgent):
         )
 
     async def run_shots(self, ctx: AgentContext) -> None:
+        """执行分镜脚本生成流程（全量或增量）"""
         char_res = await ctx.session.execute(
             select(Character).where(Character.project_id == ctx.project.id)
         )
@@ -749,6 +766,6 @@ class PlanAgent(BaseAgent):
         )
 
     async def run(self, ctx: AgentContext) -> None:
-        """Legacy entry point — runs both sub-steps sequentially."""
+        """Agent 主入口，依次执行角色设定和分镜脚本生成"""
         await self.run_characters(ctx)
         await self.run_shots(ctx)

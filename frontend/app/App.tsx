@@ -1,3 +1,4 @@
+// 应用根组件，配置路由、全局状态和全局 UI（设置弹窗、Toast 通知等）
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";

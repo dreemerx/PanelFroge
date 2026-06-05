@@ -1,3 +1,5 @@
+"""生成编排器 — 协调所有 Agent 按阶段执行完整生成流程"""
+
 from __future__ import annotations
 
 import asyncio
@@ -41,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 def _next_phase2_stage(stage: str | None) -> str | None:
+    """返回给定阶段在 PHASE2_STAGE_ORDER 中的下一个阶段，若无后续则返回 None"""
     if not isinstance(stage, str) or stage not in PHASE2_STAGE_ORDER:
         return None
     next_index = PHASE2_STAGE_ORDER.index(stage) + 1
@@ -82,12 +85,14 @@ RESUME_AGENT_FOR_STAGE = STAGE_AGENT_MAP
 
 
 def _resume_agent_for_stage(stage: str | None) -> str:
+    """根据阶段名称返回应恢复执行的 Agent 名称"""
     if not isinstance(stage, str):
         return "plan"
     return RESUME_AGENT_FOR_STAGE.get(stage, "plan")
 
 
 def _video_generation_skipped_in_result(result: Any) -> bool:
+    """检查结果字典中是否标记了视频生成被跳过"""
     if not isinstance(result, dict):
         return False
     return bool(result.get("video_generation_skipped"))
@@ -131,6 +136,7 @@ _redis_client: redis.Redis | None = None
 
 
 async def get_redis() -> redis.Redis:
+    """获取全局 Redis 客户端实例（延迟初始化）"""
     global _redis_client
     if _redis_client is None:
         from app.config import get_settings
@@ -141,10 +147,12 @@ async def get_redis() -> redis.Redis:
 
 
 def get_confirm_event_key(run_id: int) -> str:
+    """返回 Redis 中确认事件的键名"""
     return f"panelforge:confirm:{run_id}"
 
 
 def get_confirm_channel(run_id: int) -> str:
+    """返回 Redis Pub/Sub 确认频道名"""
     return f"panelforge:confirm_channel:{run_id}"
 
 
@@ -190,6 +198,7 @@ async def get_awaiting_payload(run_id: int) -> dict | None:
 
 
 async def clear_confirm_event_redis(run_id: int) -> None:
+    """清除 Redis 中的确认事件键"""
     r = await get_redis()
     await r.delete(get_confirm_event_key(run_id))
 
@@ -243,6 +252,8 @@ async def wait_for_confirm_redis(run_id: int, timeout: int = 1800) -> bool:
 
 
 class GenerationOrchestrator:
+    """生成编排器，管理从大纲到视频合成的完整 Agent 流水线"""
+
     def __init__(self, *, settings: Settings, ws: ConnectionManager, session: AsyncSession):
         self.settings = settings
         self.ws = ws
@@ -257,15 +268,18 @@ class GenerationOrchestrator:
         ]
 
     def _agent_index(self, agent_name: str) -> int:
+        """根据 Agent 名称返回其在 agents 列表中的索引"""
         for idx, agent in enumerate(self.agents):
             if agent.name == agent_name:
                 return idx
         raise ValueError(f"Unknown agent: {agent_name}")
 
     async def _delete_project_shots(self, project_id: int) -> None:
+        """删除项目的所有分镜"""
         await self.session.execute(delete(Shot).where(Shot.project_id == project_id))
 
     async def _delete_project_characters(self, project_id: int) -> None:
+        """删除项目的所有角色"""
         await self.session.execute(delete(Character).where(Character.project_id == project_id))
 
     async def _clear_character_images(self, project_id: int) -> None:
@@ -377,6 +391,7 @@ class GenerationOrchestrator:
             )
 
     async def _set_run(self, run: AgentRun, **fields) -> AgentRun:
+        """更新 AgentRun 的字段并提交到数据库"""
         for k, v in fields.items():
             setattr(run, k, v)
         run.updated_at = utcnow()
@@ -387,6 +402,7 @@ class GenerationOrchestrator:
         return run
 
     async def _log(self, run_id: int, *, agent: str, role: str, content: str) -> None:
+        """记录一条 Agent 消息日志到数据库"""
         msg = AgentMessage(run_id=run_id, agent=agent, role=role, content=content)
         self.session.add(msg)
         await self.session.commit()
@@ -394,6 +410,7 @@ class GenerationOrchestrator:
     async def _handle_run_failure(
         self, project_id: int, run: AgentRun, run_id: int, error: Exception, context: str = "Run"
     ) -> None:
+        """处理运行失败：回滚事务、记录日志、更新状态并通知前端"""
         await self.session.rollback()
         try:
             await self._log(
@@ -439,6 +456,7 @@ class GenerationOrchestrator:
         final_stage: str,
         video_generation_skipped: bool,
     ) -> None:
+        """标记运行成功完成，更新状态并通知前端"""
         completed_agent = getattr(run, "current_agent", None)
         await self._set_run(run, status="succeeded", current_agent=None, progress=1.0)
         completed_data: dict = {
@@ -453,12 +471,14 @@ class GenerationOrchestrator:
         await self.ws.send_event(project_id, {"type": "run_completed", "data": completed_data})
 
     async def _cleanup_run(self, run_id: int) -> None:
+        """清理运行相关的 Redis 缓存（确认事件和等待 payload）"""
         await clear_confirm_event_redis(run_id)
         await clear_awaiting_payload(run_id)
 
     async def _wait_for_confirm(
         self, project_id: int, run: AgentRun, agent_name: str, agent_ctx: AgentContext | None = None
     ) -> str | None:
+        """通过 Redis 等待用户确认，返回用户反馈文本（若有）"""
         current_stage = GRAPH_STAGE_FOR_AGENT.get(agent_name, "plan")
         next_stage = _next_phase2_stage(current_stage)
         recovery_summary = await build_recovery_summary(
@@ -582,6 +602,7 @@ class GenerationOrchestrator:
     async def _send_auto_approval_events(
         self, project_id: int, run: AgentRun, agent_name: str, agent_ctx: AgentContext | None = None
     ) -> None:
+        """自动模式下发送确认相关事件（跳过用户交互）"""
         current_stage = GRAPH_STAGE_FOR_AGENT.get(agent_name, "plan")
         approval_stage = _next_phase2_stage(current_stage)
         post_approval_stage = _next_phase2_stage(approval_stage) if approval_stage else None
@@ -667,6 +688,7 @@ class GenerationOrchestrator:
         run: AgentRun,
         request: GenerateRequest,
     ) -> AgentContext:
+        """构建 Agent 运行时上下文，注入服务实例和 provider 快照"""
         context_settings = settings_with_provider_snapshot(
             self.settings,
             run.provider_snapshot,
@@ -690,6 +712,7 @@ class GenerationOrchestrator:
         thread_id: str,
         start_stage: str,
     ) -> dict[str, Any]:
+        """构建 Phase2 LangGraph 的初始状态字典"""
         return {
             "project_id": project_id,
             "run_id": run_id,
@@ -717,6 +740,7 @@ class GenerationOrchestrator:
         initial_payload: Any,
         auto_mode: bool,
     ) -> tuple[bool, str]:
+        """执行 Phase2 图，处理中断（审批门）循环直至流程结束"""
         if project.id is None or run.id is None:
             raise RuntimeError("Project and run must be persisted before graph execution")
         project_pk = int(project.id)
@@ -818,6 +842,7 @@ class GenerationOrchestrator:
         agent_name: str,
         auto_mode: bool,
     ) -> tuple[bool, str]:
+        """构建并编译 Phase2 图，然后执行完整生成流程"""
         if agent_name not in GRAPH_STAGE_FOR_AGENT:
             raise ValueError(f"Unsupported agent for graph execution: {agent_name}")
         if agent_name == "outline" and not self.settings.outline_enabled:
@@ -871,6 +896,7 @@ class GenerationOrchestrator:
         run_id: int,
         auto_mode: bool = False,
     ) -> None:
+        """从检查点恢复执行中断的生成流程"""
         project = await self.session.get(Project, project_id)
         run = await self.session.get(AgentRun, run_id)
         if not project or not run:
@@ -975,6 +1001,7 @@ class GenerationOrchestrator:
         entity_type: str | None = None,
         entity_id: int | None = None,
     ) -> None:
+        """从指定 Agent 开始执行生成流程，支持 review 路由和重跑清理"""
         project = await self.session.get(Project, project_id)
         run = await self.session.get(AgentRun, run_id)
         if not project or not run:
@@ -1118,6 +1145,7 @@ class GenerationOrchestrator:
     async def run(
         self, *, project_id: int, run_id: int, request: GenerateRequest, auto_mode: bool = False
     ) -> None:
+        """从头开始执行完整生成流程（大纲或规划阶段起步）"""
         await self.run_from_agent(
             project_id=project_id,
             run_id=run_id,

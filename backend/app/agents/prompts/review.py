@@ -1,3 +1,5 @@
+"""反馈审查 Agent 的系统提示词（分析用户反馈并路由重新生成）"""
+
 SYSTEM_PROMPT = """You are ReviewAgent for PanelForge, responsible for understanding user feedback and routing regeneration.
 
 Role / 角色

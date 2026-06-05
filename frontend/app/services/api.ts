@@ -1,3 +1,4 @@
+// 后端 API 客户端，封装所有 REST 接口调用（项目、角色、分镜、配置、素材等）
 import { ApiError } from "~/types/errors";
 import { getApiBase } from "~/utils/runtimeBase";
 import type {
@@ -68,6 +69,7 @@ export function getStaticUrl(path: string | null | undefined): string | null {
 	return `${API_BASE}${trimmedPath}`;
 }
 
+// 通用 API 请求函数，自动注入 admin token、处理错误响应和网络异常
 async function fetchApi<T>(
 	endpoint: string,
 	options?: RequestInit,
@@ -155,7 +157,7 @@ async function fetchApi<T>(
 	}
 }
 
-// Projects API
+// 项目相关 API
 export const projectsApi = {
 	list: async () => {
 		const data = await fetchApi<{ items: Project[]; total: number }>(
@@ -265,7 +267,7 @@ export const projectsApi = {
 		),
 };
 
-// Shots API
+// 分镜相关 API
 export const shotsApi = {
 	update: (id: number, data: ShotUpdatePayload) =>
 		fetchApi<Shot>(`/api/v1/shots/${id}`, {
@@ -285,7 +287,7 @@ export const shotsApi = {
 		fetchApi<void>(`/api/v1/shots/${id}`, { method: "DELETE" }),
 };
 
-// Characters API
+// 角色相关 API（含角色圣经和参考图管理）
 export const charactersApi = {
 	update: (id: number, data: CharacterUpdatePayload) =>
 		fetchApi<Character>(`/api/v1/characters/${id}`, {
@@ -346,7 +348,7 @@ export const charactersApi = {
 		}),
 };
 
-// Assets API
+// 素材资产相关 API
 export const assetsApi = {
 	list: (opts?: { assetType?: string; search?: string; tag?: string }) => {
 		const params = new URLSearchParams();
@@ -386,7 +388,7 @@ export const assetsApi = {
 		fetchApi<void>(`/api/v1/assets/${id}`, { method: "DELETE" }),
 };
 
-// Config API
+// 版本管理 API（列表、回滚、对比）
 export const versionsApi = {
 	list: (projectId: number, entityType: VersionEntityType, entityId: number) =>
 		fetchApi<VersionListRead>(
@@ -415,6 +417,7 @@ export const versionsApi = {
 		),
 };
 
+// 系统配置 API（获取/更新配置、测试连接、揭示敏感值）
 export const configApi = {
 	get: () => fetchApi<import("~/types").ConfigItem[]>("/api/v1/config"),
 	update: (config: Record<string, import("~/types").ConfigValue>) => {
@@ -472,6 +475,7 @@ export const configApi = {
 		}),
 };
 
+// 风格模板 API
 export const styleTemplatesApi = {
 	list: (params?: { category?: string }) => {
 		const qs = params?.category ? `?category=${params.category}` : "";
@@ -506,7 +510,7 @@ export const styleTemplatesApi = {
 		}),
 };
 
-// Export API
+// 导出 API（PDF 漫画册 / Webtoon 长图）
 export const exportApi = {
 	triggerPdf: (projectId: number) =>
 		fetchApi<ExportResponse>(`/api/v1/projects/${projectId}/export/pdf`, {
@@ -524,7 +528,7 @@ export const exportApi = {
 		),
 };
 
-// Consistency Evaluation API
+// 一致性评估 API（触发评估、获取报告和历史记录）
 export const consistencyApi = {
 	triggerEval: (projectId: number) =>
 		fetchApi<import("~/types").ConsistencyEvalResponse>(
@@ -543,6 +547,7 @@ export const consistencyApi = {
 		),
 };
 
+// IP 宇宙 API（宇宙管理、项目关联、共享角色）
 export const universesApi = {
 	list: () =>
 		fetchApi<import("~/types").Universe[]>("/api/v1/universes"),

@@ -1,3 +1,5 @@
+"""运行恢复服务 — 从检查点恢复中断的 Agent 运行，提供恢复摘要和控制面。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -210,6 +212,16 @@ async def build_recovery_summary(
     database_url: str,
     run: AgentRun,
 ) -> RecoverySummaryRead:
+    """构建 Agent 运行的恢复摘要（当前阶段、已完成阶段、是否可恢复）。
+
+    Args:
+        session: 数据库会话
+        database_url: 数据库连接 URL（用于读取检查点）
+        run: AgentRun 实例
+
+    Returns:
+        恢复摘要数据
+    """
     run_id = run.id
     run_pk = run_id if run_id is not None else 0
     snapshots = await _checkpoint_history(database_url, run)
@@ -261,6 +273,17 @@ async def build_recovery_control_surface(
     run: AgentRun,
     state: Literal["active", "recoverable"],
 ) -> RecoveryControlRead:
+    """构建恢复控制面数据（含恢复摘要和活跃运行信息）。
+
+    Args:
+        session: 数据库会话
+        database_url: 数据库连接 URL
+        run: AgentRun 实例
+        state: 运行状态（active 活跃中 / recoverable 可恢复）
+
+    Returns:
+        恢复控制面数据
+    """
     summary = await build_recovery_summary(session=session, database_url=database_url, run=run)
     detail = (
         "Project already has an active run" if state == "active" else "Project has a resumable run"

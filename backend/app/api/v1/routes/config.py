@@ -1,3 +1,5 @@
+"""系统配置 API 路由，管理配置项的读写、敏感值揭示和服务连通性测试。"""
+
 from __future__ import annotations
 
 import ipaddress
@@ -26,7 +28,7 @@ router = APIRouter()
 
 
 def _is_safe_url(url: str) -> bool:
-    """检查 URL 是否安全（不指向私网/本地）"""
+    """检查 URL 是否安全（不指向私网或本地地址）。"""
     # 空 URL 视为安全（使用默认值）
     if not url or not url.strip():
         return True
@@ -103,6 +105,7 @@ _ALLOWED_OVERRIDE_FIELDS = {
 
 @router.get("", response_model=list[ConfigItemRead])
 async def list_configs(session: AsyncSession = SessionDep):
+    """列出所有有效的配置项。"""
     service = ConfigService(session)
     return await service.list_effective()
 
@@ -113,7 +116,7 @@ async def reveal_value(
     session: AsyncSession = SessionDep,
     _: None = AdminDep,
 ):
-    """获取敏感配置的真实值（用于前端显示）"""
+    """获取敏感配置项的真实值（用于前端脱敏展示后的揭示）。"""
     service = ConfigService(session)
     value = await service.get_raw_value(payload.key)
     return RevealValueResponse(key=payload.key, value=value)
@@ -126,6 +129,7 @@ async def update_configs(
     session: AsyncSession = SessionDep,
     _: None = AdminDep,
 ):
+    """批量更新配置项，部分字段变更需重启服务才能生效。"""
     service = ConfigService(session)
     result = await service.upsert_configs(payload.configs)
     await service.apply_settings_overrides()
@@ -144,7 +148,7 @@ async def update_configs(
 async def test_connection(
     payload: TestConnectionRequest,
 ):
-    """测试服务连接"""
+    """测试指定服务（LLM / 图像 / 视频）的连通性。"""
     settings = get_settings()
 
     # 如果传递了配置覆盖，创建临时配置对象
@@ -194,7 +198,7 @@ async def test_connection(
 
 
 async def _test_llm_connection(settings) -> TestConnectionResponse:
-    """测试 LLM 服务连接（使用实际服务类）"""
+    """测试 LLM 文本生成服务的连通性。"""
     try:
         probe = await probe_text_provider(settings)
         model_name = (
@@ -230,7 +234,7 @@ async def _test_llm_connection(settings) -> TestConnectionResponse:
 
 
 async def _test_image_connection(settings) -> TestConnectionResponse:
-    """测试图像生成服务连接（使用实际服务类）"""
+    """测试图像生成服务的连通性。"""
     try:
         from app.services.image_factory import create_image_service
 
@@ -276,7 +280,7 @@ async def _test_image_connection(settings) -> TestConnectionResponse:
 
 
 async def _test_video_connection(settings) -> TestConnectionResponse:
-    """测试视频生成服务连接（使用实际服务类）"""
+    """测试视频生成服务的连通性。"""
     try:
         from app.services.video_factory import create_video_service
 

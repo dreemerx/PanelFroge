@@ -1,9 +1,11 @@
+// 聊天抽屉组件，从右侧滑出的对话面板，用于 AI 交互和反馈
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { useEditorStore, useShallow } from "~/stores/editorStore";
 import { useChatPanelStore } from "~/stores/chatPanelStore";
 import { ChatPanel } from "~/components/chat/ChatPanel";
 
+// ChatDrawer 组件的属性接口
 interface ChatDrawerProps {
 	onSendFeedback: (content: string) => void;
 	onConfirm: (feedback?: string) => void;
@@ -14,6 +16,7 @@ interface ChatDrawerProps {
 	generateDisabledReason?: string;
 }
 
+// 聊天抽屉组件：展示对话面板，支持反馈发送、确认和生成控制
 export function ChatDrawer({
 	onSendFeedback,
 	onConfirm,

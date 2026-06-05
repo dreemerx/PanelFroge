@@ -1,3 +1,4 @@
+// 资产库抽屉组件，从右侧滑出，支持浏览、搜索、删除和使用保存的角色/场景资产
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { assetsApi, getStaticUrl } from "~/services/api";
@@ -6,8 +7,10 @@ import { SvgIcon } from "~/components/ui/SvgIcon";
 import type { Asset } from "~/types";
 import type { IconName } from "~/components/ui/SvgIcon";
 
+// 资产类型
 type AssetType = "character" | "scene";
 
+// 资产分类标签页配置
 const ASSET_TABS: { key: AssetType | "all"; label: string; icon: IconName }[] =
 	[
 		{ key: "all", label: "全部", icon: "layers" },
@@ -15,6 +18,7 @@ const ASSET_TABS: { key: AssetType | "all"; label: string; icon: IconName }[] =
 		{ key: "scene", label: "场景", icon: "image" },
 	];
 
+// AssetDrawer 组件的属性接口
 interface AssetDrawerProps {
 	open: boolean;
 	onClose: () => void;
@@ -22,6 +26,7 @@ interface AssetDrawerProps {
 	projectId?: number;
 }
 
+// 资产卡片组件：展示资产图片、名称、类型，支持使用和删除操作
 function AssetCard({
 	asset,
 	projectId,
@@ -98,6 +103,7 @@ function AssetCard({
 	);
 }
 
+// 资产库抽屉组件：分类浏览、搜索、删除和使用资产
 export function AssetDrawer({ open, onClose, projectId }: AssetDrawerProps) {
 	const queryClient = useQueryClient();
 	const [activeTab, setActiveTab] = useState<AssetType | "all">("all");

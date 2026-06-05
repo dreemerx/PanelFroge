@@ -1,3 +1,5 @@
+"""审查 Agent — 使用 VLM 对生成的角色和分镜图片进行质量评分"""
+
 from __future__ import annotations
 
 import base64
@@ -21,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 class CriticAgent(BaseAgent):
+    """图像质量审查 Agent，通过 VLM 评估一致性、质量和构图"""
+
     name = "critic"
 
     def __init__(self) -> None:
@@ -33,12 +37,7 @@ class CriticAgent(BaseAgent):
         image_url: str | None,
         settings: Settings,
     ) -> list[dict[str, Any]]:
-        """Build a multimodal user message for VLM review.
-
-        If the image URL can be resolved to a public URL, send as image_url content block.
-        If it's a local file, read and send as base64 data URL.
-        Otherwise, fall back to text-only review.
-        """
+        """构建多模态用户消息：优先附加图片（URL 或 base64），否则回退到纯文本审查"""
         content_parts: list[dict[str, Any]] = [
             {"type": "text", "text": text_prompt},
         ]
@@ -98,10 +97,7 @@ class CriticAgent(BaseAgent):
         return [{"role": "user", "content": content_parts}]
 
     def _parse_review_response(self, raw_text: str) -> dict[str, Any]:
-        """Parse structured JSON from the VLM response.
-
-        Handles potential markdown code fences and extracts the JSON object.
-        """
+        """解析 VLM 返回的 JSON 审查结果，处理 markdown 代码块和格式修正"""
         text = raw_text.strip()
         # Strip markdown code fences if present
         fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
@@ -167,7 +163,7 @@ class CriticAgent(BaseAgent):
         entity_id: int,
         entity_name: str,
     ) -> dict[str, Any]:
-        """Execute a single review via the TextService VLM call."""
+        """执行单次 VLM 审查调用，返回评分结果（含维度分、问题和建议）"""
         settings = ctx.settings
 
         # Check if critique is enabled
@@ -263,7 +259,7 @@ class CriticAgent(BaseAgent):
         return result
 
     async def run_character_review(self, ctx: AgentContext) -> dict[str, Any]:
-        """Review all character images in the project."""
+        """审查项目中所有角色形象图，返回评分汇总和是否需要重新生成"""
         query = select(Character).where(
             Character.project_id == ctx.project.id,
             Character.image_url.isnot(None),
@@ -378,7 +374,7 @@ class CriticAgent(BaseAgent):
         }
 
     async def run_shot_review(self, ctx: AgentContext) -> dict[str, Any]:
-        """Review all shot images in the project."""
+        """审查项目中所有分镜画面，返回评分汇总和是否需要重新生成"""
         query = select(Shot).where(
             Shot.project_id == ctx.project.id,
             Shot.image_url.isnot(None),

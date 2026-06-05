@@ -1,3 +1,5 @@
+"""FastAPI 依赖注入函数，提供数据库会话、配置、权限校验等公共依赖。"""
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -16,21 +18,25 @@ T = TypeVar("T")
 
 
 async def get_app_settings() -> Settings:
+    """获取全局应用配置实例。"""
     return get_settings()
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """获取异步数据库会话，自动管理生命周期。"""
     async for session in get_session():
         yield session
 
 
 async def get_ws_manager() -> ConnectionManager:
+    """获取 WebSocket 连接管理器单例。"""
     return ws_manager
 
 
 async def require_admin(
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
 ) -> None:
+    """校验管理员 Token，未配置 admin_token 时放行，否则必须匹配。"""
     settings = get_settings()
     if not settings.admin_token:
         return
@@ -39,6 +45,7 @@ async def require_admin(
 
 
 def require_run_id(run: AgentRun) -> int:
+    """确保已持久化的 AgentRun 拥有 ID，否则抛出异常。"""
     run_id = run.id
     if run_id is None:
         raise RuntimeError("Persisted AgentRun is missing an id")
@@ -48,7 +55,7 @@ def require_run_id(run: AgentRun) -> int:
 async def get_or_404(
     session: AsyncSession, model: type[T], id: int, detail: str | None = None
 ) -> T:
-    """Fetch a DB object by primary key or raise 404."""
+    """根据主键获取数据库对象，未找到则抛出 404。"""
     obj = await session.get(model, id)
     if not obj:
         raise HTTPException(status_code=404, detail=detail or f"{model.__name__} not found")

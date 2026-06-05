@@ -1,3 +1,5 @@
+"""编排模块 — 基于 LangGraph 的 Phase2 工作流图定义、节点、状态与持久化"""
+
 from .graph import build_phase2_graph, phase2_graph
 from .runtime import (
     build_graph_config,

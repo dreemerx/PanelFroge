@@ -1,3 +1,4 @@
+// 新建项目页面，分步引导用户完成故事、风格和确认
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,6 +19,7 @@ import {
 import { toast } from "~/utils/toast";
 import { ApiError } from "~/types/errors";
 
+// 新建项目页面组件：三步流程（故事 -> 风格 -> 确认）创建项目
 export function NewProjectPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -1,3 +1,4 @@
+// 项目历史抽屉组件，从右侧滑出，支持浏览、重命名、批量删除项目
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectsApi } from "~/services/api";
@@ -8,12 +9,14 @@ import { toast } from "~/utils/toast";
 import { ApiError } from "~/types/errors";
 import { cleanupDeletedProjectCaches } from "~/features/projects/deleteProject";
 
+// HistoryDrawer 组件的属性接口
 interface HistoryDrawerProps {
 	open: boolean;
 	onClose: () => void;
 	onNavigate?: (projectId: number) => void;
 }
 
+// 项目状态的中文标签
 function statusLabel(status: string) {
 	const map: Record<string, string> = {
 		draft: "草稿",
@@ -25,6 +28,7 @@ function statusLabel(status: string) {
 	return map[status] || status;
 }
 
+// 项目状态对应的样式类名
 function statusCls(status: string) {
 	const map: Record<string, string> = {
 		draft: "badge-ghost",
@@ -36,6 +40,7 @@ function statusCls(status: string) {
 	return map[status] || "badge-ghost";
 }
 
+// 项目行组件：展示项目信息，支持选择、导航和内联重命名
 function ProjectRow({
 	project,
 	isSelected,
@@ -130,6 +135,7 @@ function ProjectRow({
 	);
 }
 
+// 项目历史抽屉组件：浏览所有项目，支持重命名和批量删除
 export function HistoryDrawer({ open, onClose, onNavigate }: HistoryDrawerProps) {
 	const queryClient = useQueryClient();
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);

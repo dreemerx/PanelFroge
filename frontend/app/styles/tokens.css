@@ -1,45 +1,15 @@
 /**
- * Design Tokens
- * PanelForge - Modern Cinematic Design System
+ * 设计令牌 - PanelForge 现代电影风格设计系统
  */
 
 @layer base {
   :root {
-    /* Accent Colors (oklch components) */
-    --accent-violet: 0.62 0.24 290;
-    --accent-cyan: 0.72 0.18 195;
-    --accent-amber: 0.75 0.18 80;
-
-    /* Spacing Scale */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
-    --space-2xl: 3rem;
-
-    /* Border Widths */
-    --border-thin: 1px;
-    --border-medium: 1.5px;
-
-    /* Touch Targets */
-    --touch-target-min: 44px;
-
-    /* Animation Durations */
-    --duration-fast: 150ms;
-    --duration-normal: 200ms;
-    --duration-slow: 300ms;
-
-    /* Z-Index Scale */
-    --z-dropdown: 10;
-    --z-sticky: 20;
-    --z-fixed: 30;
+    /* Z-Index 层级（仅保留实际使用的） */
     --z-modal-backdrop: 40;
     --z-modal: 50;
     --z-popover: 60;
-    --z-tooltip: 70;
 
-    /* Glass Effect */
+    /* 毛玻璃效果 */
     --glass-bg: oklch(var(--b2) / 0.6);
     --glass-border: oklch(var(--bc) / 0.08);
     --glass-blur: 16px;
@@ -52,11 +22,7 @@
 }
 
 @layer utilities {
-  .touch-target {
-    min-width: var(--touch-target-min);
-    min-height: var(--touch-target-min);
-  }
-
+  /* 毛玻璃卡片 */
   .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur));
@@ -64,22 +30,9 @@
     border: 1px solid var(--glass-border);
   }
 
-  .glass-subtle {
-    background: oklch(var(--b2) / 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid oklch(var(--bc) / 0.06);
-  }
-
+  /* 渐变文字 */
   .gradient-text {
     background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--s)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .gradient-text-warm {
-    background: linear-gradient(135deg, oklch(var(--p)), oklch(var(--a)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

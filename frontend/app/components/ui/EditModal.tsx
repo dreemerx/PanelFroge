@@ -1,6 +1,8 @@
+// 通用编辑弹窗组件，支持动态字段配置（文本和文本域）
 import React, { useState, useEffect } from "react";
 import { SvgIcon } from "~/components/ui/SvgIcon";
 
+// 字段配置接口
 interface FieldConfig {
   name: string;
   label: string;
@@ -8,6 +10,7 @@ interface FieldConfig {
   defaultValue?: string;
 }
 
+// EditModal 组件的属性接口
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +21,7 @@ interface EditModalProps {
   isLoading?: boolean;
 }
 
+// 通用编辑弹窗组件：动态渲染字段，支持异步保存
 export function EditModal({
   isOpen,
   onClose,

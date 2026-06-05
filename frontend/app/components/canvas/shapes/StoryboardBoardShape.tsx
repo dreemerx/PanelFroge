@@ -1,3 +1,4 @@
+// 分镜板块 shape 工具类，整合规划、角色、分镜和视频输出的完整工作台
 import { Fragment, useState } from "react";
 import {
 	HTMLContainer,
@@ -21,12 +22,14 @@ import type {
 	StoryboardBoardSectionKey,
 } from "./types";
 
+// 各区域的中文标题
 const SECTION_TITLES: Record<StoryboardBoardSectionKey, string> = {
 	plan: "编剧规划",
 	render: "视觉渲染",
 	compose: "最终输出",
 };
 
+// 区域间流程连接的描述文案
 const SECTION_FLOW_COPY: Partial<Record<StoryboardBoardSectionKey, string>> = {
 	render: "角色与分镜接力",
 	compose: "镜头汇成成片",
@@ -43,10 +46,12 @@ const VIDEO_PLACEHOLDER_ICON = (
 	</svg>
 );
 
+// 阻止画布拖拽事件冒泡
 function stopCanvasDrag(e: React.PointerEvent<HTMLElement>) {
 	e.stopPropagation();
 }
 
+// 发射实体操作事件到画布事件总线
 function emitEntityAction({
 	action,
 	entityType,
@@ -73,6 +78,7 @@ function emitEntityAction({
 	});
 }
 
+// 角色卡片组件（分镜板块内联版）：展示角色图片、描述和操作按钮
 function CharacterCard({ character }: { character: ReviewedCharacter }) {
 	const isApproved = character.approval_state === "approved";
 	const currentImage = getStaticUrl(character.image_url);
@@ -238,6 +244,7 @@ function CharacterCard({ character }: { character: ReviewedCharacter }) {
 	);
 }
 
+// 镜头卡片组件（分镜板块内联版）：展示镜头图片、描述和操作按钮
 function ShotCard({ shot }: { shot: ReviewedShot }) {
 	const isApproved = shot.approval_state === "approved";
 	const imageUrl = getStaticUrl(shot.image_url);
@@ -470,6 +477,7 @@ function ShotCard({ shot }: { shot: ReviewedShot }) {
 	);
 }
 
+// 规划区域内容组件：展示故事文本和镜头总览表格
 function PlanSection({
 	story,
 	summary,
@@ -548,6 +556,7 @@ function PlanSection({
 	);
 }
 
+// 分镜板块 shape 工具类
 export class StoryboardBoardShapeUtil extends ShapeUtil<StoryboardBoardShape> {
 	static override type = "storyboard-board" as const;
 

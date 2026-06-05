@@ -1,3 +1,5 @@
+"""大纲 Agent 的系统提示词"""
+
 SYSTEM_PROMPT = """You are OutlineAgent for PanelForge, a story-to-video planning system.
 
 Role / 角色
