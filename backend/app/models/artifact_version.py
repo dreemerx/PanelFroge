@@ -1,3 +1,5 @@
+"""产物版本快照模型，记录角色和分镜的历史变更。"""
+
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,3 +1,5 @@
+"""运行记录模型，追踪项目的每次编排执行。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from app.db.utils import utcnow
 
 
 class Run(SQLModel, table=True):
+    """运行记录，追踪项目的一次编排执行流程。"""
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", index=True)
     thread_id: str = Field(index=True, unique=True)

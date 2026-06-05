@@ -1,3 +1,5 @@
+"""应用自定义异常层次结构。"""
+
 from __future__ import annotations
 
 from typing import Any

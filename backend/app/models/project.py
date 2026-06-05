@@ -1,3 +1,5 @@
+"""项目、角色和镜头模型。"""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, cast
 
@@ -72,6 +74,11 @@ class Character(SQLModel, table=True):
 
     @property
     def approval_state(self) -> str:
+        """获取角色审批状态。
+
+        Returns:
+            "draft"（未审批）、"approved"（已审批且无变更）或 "superseded"（已过时）。
+        """
         if self.approval_version <= 0 or self.approved_at is None:
             return "draft"
         if (
@@ -83,6 +90,7 @@ class Character(SQLModel, table=True):
         return "superseded"
 
     def freeze_approval(self) -> None:
+        """将当前角色内容快照为审批基准。"""
         self.approved_name = self.name
         self.approved_description = self.description
         self.approved_image_url = self.image_url
@@ -140,6 +148,11 @@ class Shot(SQLModel, table=True):
 
     @property
     def approval_state(self) -> str:
+        """获取镜头审批状态。
+
+        Returns:
+            "draft"（未审批）、"approved"（已审批且无变更）或 "superseded"（已过时）。
+        """
         if self.approval_version <= 0 or self.approved_at is None:
             return "draft"
         if (
@@ -161,6 +174,7 @@ class Shot(SQLModel, table=True):
         return "superseded"
 
     def freeze_approval(self) -> None:
+        """将当前镜头内容快照为审批基准。"""
         self.approved_description = self.description
         self.approved_prompt = self.prompt
         self.approved_image_prompt = self.image_prompt
@@ -179,6 +193,7 @@ class Shot(SQLModel, table=True):
 
 
 class ShotCharacterBinding(SQLModel, table=True):
+    """镜头-角色关联表（多对多中间表）。"""
     __tablename__ = cast("declared_attr[str]", cast(object, "shot_character_binding"))
 
     shot_id: int = Field(foreign_key="shot.id", primary_key=True, index=True)

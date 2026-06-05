@@ -1,3 +1,5 @@
+"""Agent 运行记录与消息模型。"""
+
 from datetime import datetime
 from typing import Optional, List
 

@@ -1,3 +1,5 @@
+"""生成产物模型（图片、视频等资源文件记录）。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from app.db.utils import utcnow
 
 
 class Artifact(SQLModel, table=True):
+    """生成产物，记录项目运行过程中产出的图片、视频等资源。"""
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", index=True)
     run_id: int = Field(foreign_key="run.id", index=True)

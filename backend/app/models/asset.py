@@ -1,3 +1,5 @@
+"""全局资产模型，支持角色和场景跨项目复用。"""
+
 from datetime import datetime
 from typing import Optional
 

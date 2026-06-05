@@ -1,3 +1,5 @@
+"""对话消息模型，用于记录 Agent 与用户之间的交互消息。"""
+
 from datetime import datetime
 from typing import Optional
 

@@ -1,3 +1,5 @@
+"""应用配置模块，通过环境变量和 .env 文件加载全局配置。"""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -8,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """应用全局配置，所有配置项均可通过环境变量覆盖。"""
     # Note: do not hardcode env_file here; tests instantiate Settings() directly and
     # should not implicitly read the repo's .env. Runtime uses get_settings().
     model_config = SettingsConfigDict(extra="ignore")
@@ -316,6 +319,11 @@ class Settings(BaseSettings):
 
 
 def apply_settings_overrides(overrides: dict[str, Any]) -> None:
+    """将数据库中的配置覆盖项应用到运行时 Settings 单例。
+
+    Args:
+        overrides: 需要覆盖的配置键值对。
+    """
     if not overrides:
         return
     settings = get_settings()
@@ -328,4 +336,9 @@ def apply_settings_overrides(overrides: dict[str, Any]) -> None:
 
 @lru_cache
 def get_settings() -> Settings:
+    """获取全局 Settings 单例（带 LRU 缓存）。
+
+    Returns:
+        Settings 实例。
+    """
     return Settings(_env_file=".env", _env_file_encoding="utf-8")

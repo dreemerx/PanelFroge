@@ -1,3 +1,5 @@
+"""数据库会话与引擎管理，负责初始化表结构和提供异步会话。"""
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -32,12 +34,11 @@ async_session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(
 
 
 async def _sync_missing_metadata_columns() -> None:
-    """Add columns that exist in SQLModel metadata but are missing in an existing DB.
+    """同步缺失的数据库列：将 SQLModel 元数据中有但数据库中不存在的列添加到已有表中。
 
-    Alembic is still the source of truth for normal migrations. This is a local/dev
-    safety net for partially migrated databases: create_all() creates missing tables
-    but does not alter existing tables, so new model fields like project.story_outline
-    can otherwise crash API requests with UndefinedColumnError.
+    Alembic 仍然是正常迁移的权威来源。此函数是本地/开发环境的安全网：
+    create_all() 只创建缺失的表，不会修改已有表结构，因此新增的模型字段
+    （如 project.story_outline）可能导致 UndefinedColumnError。
     """
     import logging
 
@@ -127,7 +128,7 @@ def _run_alembic_upgrade() -> None:
 
 
 async def init_db() -> None:
-    """Initialize database tables and cleanup stale runs."""
+    """初始化数据库表结构并清理过期的运行状态。"""
     import logging
     log = logging.getLogger("panelforge.init_db")
     settings = get_settings()
@@ -191,5 +192,10 @@ async def init_db() -> None:
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """获取一个异步数据库会话（用于 FastAPI 依赖注入）。
+
+    Yields:
+        AsyncSession 实例。
+    """
     async with async_session_maker() as session:
         yield session

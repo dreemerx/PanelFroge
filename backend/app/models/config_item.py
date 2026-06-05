@@ -1,3 +1,5 @@
+"""数据库配置项模型。"""
+
 from datetime import datetime
 
 from sqlalchemy import Column, Text
@@ -7,7 +9,7 @@ from app.db.utils import utcnow
 
 
 class ConfigItem(SQLModel, table=True):
-    """Environment configuration stored in the database."""
+    """存储在数据库中的环境配置项。"""
 
     key: str = Field(primary_key=True, max_length=255)
     value: str = Field(default="", sa_column=Column(Text, nullable=False))

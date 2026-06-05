@@ -1,3 +1,5 @@
+"""风格模板模型，定义视觉风格预设。"""
+
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,3 +1,5 @@
+"""编排阶段模型，记录运行流程中的各个阶段。"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from app.db.utils import utcnow
 
 
 class Stage(SQLModel, table=True):
+    """编排阶段，表示一次运行中的某个处理步骤。"""
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", index=True)
     run_id: int = Field(foreign_key="run.id", index=True)
