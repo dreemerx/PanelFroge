@@ -24,7 +24,11 @@ ALEMBIC_DIR = Path(__file__).resolve().parents[2] / "alembic"
 
 def _build_engine() -> AsyncEngine:
     settings = get_settings()
-    return create_async_engine(settings.database_url, echo=settings.db_echo, pool_pre_ping=True)
+    # 当连接容器内数据库时禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL
+    connect_args = {}
+    if "localhost" not in settings.database_url and "127.0.0.1" not in settings.database_url:
+        connect_args["ssl"] = False
+    return create_async_engine(settings.database_url, echo=settings.db_echo, pool_pre_ping=True, connect_args=connect_args)
 
 
 engine: AsyncEngine = _build_engine()

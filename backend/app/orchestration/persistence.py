@@ -79,7 +79,12 @@ async def ensure_postgres_checkpointer_setup(database_url: str) -> None:
         if _checkpointer_setup_states.get(conn_str):
             return
 
-        conn = await asyncpg.connect(conn_str)
+        # 当连接容器内数据库时禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL
+        connect_kwargs = {}
+        if "localhost" not in conn_str and "127.0.0.1" not in conn_str:
+            connect_kwargs["ssl"] = False
+
+        conn = await asyncpg.connect(conn_str, **connect_kwargs)
         try:
             for statement in _BOOTSTRAP_STATEMENTS:
                 await conn.execute(statement)
