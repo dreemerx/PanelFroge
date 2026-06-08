@@ -11,6 +11,7 @@ import httpx
 from PIL import Image
 
 from app.services.file_cleaner import STATIC_DIR, get_local_path, is_local_file
+from app.utils.ssrf import validate_external_url
 from app.services.face_cropper import (
     compose_face_reference_strip,
     is_face_cropping_available,
@@ -33,6 +34,9 @@ class ImageComposer:
             if local_path and local_path.exists():
                 return Image.open(local_path).convert("RGB")
             raise FileNotFoundError(f"Local image not found: {local_path}")
+        # SSRF 防护：校验 URL 不指向内网地址
+        validate_external_url(url)
+
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=30.0)
             response.raise_for_status()

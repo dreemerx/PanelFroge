@@ -17,12 +17,13 @@ services:
 
   redis:
     image: docker.1ms.run/redis:7-alpine
+    command: redis-server --requirepass panelforge_redis_dev
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "panelforge_redis_dev", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,22 +40,21 @@ services:
     environment:
       # 使用容器名连接 postgres 和 redis
       DATABASE_URL: postgresql+asyncpg://panelforge:panelforge_dev@postgres:5432/panelforge
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:panelforge_redis_dev@redis:6379/0
       # task_manager / confirm 依赖进程内状态，当前实现默认单 worker 才安全
       WEB_CONCURRENCY: "1"
-      # 清除 Docker Desktop 泄漏的代理设置，避免干扰外部 API 的 SSL 连接
-      HTTP_PROXY: ""
-      HTTPS_PROXY: ""
-      http_proxy: ""
-      https_proxy: ""
-      NO_PROXY: ""
-      no_proxy: ""
       # asyncpg 对非 localhost 默认启用 SSL，显式禁用
       PGSSLMODE: disable
     ports:
       - "18765:18765"
     volumes:
       - ./backend/app/static:/app/app/static
+    # 启动前清除 Docker Desktop 泄漏的代理变量，避免干扰外部 API SSL 连接
+    command: >
+      sh -c "
+        unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy NO_PROXY no_proxy &&
+        uvicorn app.main:app --host 0.0.0.0 --port $${PORT:-18765} --workers $${WEB_CONCURRENCY:-1}
+      "
     restart: unless-stopped
 
   frontend:

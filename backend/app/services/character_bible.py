@@ -18,6 +18,8 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.utils.ssrf import validate_external_url
+
 from app.services.face_cropper import detect_faces, is_face_cropping_available
 
 if TYPE_CHECKING:
@@ -77,6 +79,7 @@ async def compute_face_embedding(image_url: str) -> list[float] | None:
                 return None
         else:
             # 远程 URL：通过 HTTP 下载
+            validate_external_url(image_url)
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(image_url)
                 response.raise_for_status()

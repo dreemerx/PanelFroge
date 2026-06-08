@@ -13,6 +13,8 @@ from io import BytesIO
 from typing import TYPE_CHECKING
 
 import httpx
+
+from app.utils.ssrf import SSRFError, validate_external_url
 from PIL import Image, ImageDraw, ImageFont
 
 from app.services.file_cleaner import STATIC_DIR
@@ -71,6 +73,13 @@ class ExportService:
 
         # 外部 URL
         if not url.startswith(("http://", "https://")):
+            return None
+
+        # SSRF 防护：校验 URL 不指向内网地址
+        try:
+            validate_external_url(url)
+        except SSRFError as e:
+            logger.warning(f"SSRF blocked: {url} ({e})")
             return None
 
         try:

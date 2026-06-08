@@ -16,6 +16,7 @@ import httpx
 
 from app.config import Settings
 from app.services.file_cleaner import STATIC_DIR
+from app.utils.ssrf import validate_external_url
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,9 @@ class ImageService:
         if not url.startswith(("http://", "https://")):
             return url
 
+        # SSRF 防护：校验 URL 不指向内网地址
+        validate_external_url(url)
+
         content_type_map = {
             "image/png": ".png",
             "image/jpeg": ".jpg",
@@ -128,6 +132,9 @@ class ImageService:
         logger.info(f"Downloading image from: {url[:100]}...")
         logger.debug(f"Full URL: {url}")
         logger.info(f"Saving to: {save_path}")
+
+        # SSRF 防护：校验 URL 不指向内网地址
+        validate_external_url(url)
 
         try:
             # 使用 asyncio.to_thread 在线程池中运行同步的 urllib 代码

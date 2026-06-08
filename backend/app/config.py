@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Uvicorn log level")
 
     api_v1_prefix: str = "/api/v1"
-    cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:15173", "http://127.0.0.1:15173"])
     admin_token: str | None = Field(
         default=None,
         description="Admin token for configuration updates (sent via X-Admin-Token header)",
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     db_echo: bool = False
 
     # Redis（用于 confirm 信号共享）
-    redis_url: str = Field(default="redis://localhost:6379/0")
+    redis_url: str = Field(default="redis://:panelforge_redis_dev@localhost:6379/0")
 
     # ============================================
     # LLM 服务 (Anthropic 兼容接口)

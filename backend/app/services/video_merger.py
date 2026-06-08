@@ -15,6 +15,7 @@ from pathlib import Path
 import httpx
 
 from app.services.file_cleaner import get_local_path
+from app.utils.ssrf import validate_external_url
 from app.utils.subprocess_compat import run_subprocess
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,9 @@ class VideoMergerService:
             shutil.copyfile(local_path, dest_path)
             logger.info("Copied local video %s to %s", local_path, dest_path)
             return
+
+        # SSRF 防护：校验 URL 不指向内网地址
+        validate_external_url(url)
 
         client = await self._get_client()
         async with client.stream("GET", url) as response:

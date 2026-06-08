@@ -7,6 +7,9 @@
 .ruff_cache
 .vscode
 .env
+.env.*
+!.env.example
+!.env.docker.example
 .kiro
 **/__pycache__/
 .shared

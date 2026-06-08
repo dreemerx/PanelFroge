@@ -19,6 +19,8 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.utils.ssrf import validate_external_url
+
 from app.models.consistency_report import ConsistencyReport
 from app.models.project import Character, Project, Shot
 from app.services.face_cropper import detect_faces, is_face_cropping_available
@@ -319,6 +321,8 @@ class ConsistencyEvalService:
 
         # HTTP URL
         if image_url.startswith("http://") or image_url.startswith("https://"):
+            # SSRF 防护：校验 URL 不指向内网地址
+            validate_external_url(image_url)
             try:
                 async with httpx.AsyncClient(timeout=15.0) as client:
                     resp = await client.get(image_url)

@@ -28,10 +28,18 @@ COPY app ./app
 COPY alembic.ini ./
 COPY alembic ./alembic
 
+# 创建非 root 用户
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
+
+# 确保静态文件目录可写
+RUN mkdir -p /app/app/static && chown -R appuser:appuser /app
+
 EXPOSE 18765
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH=/app
+
+USER appuser
 
 # task_manager / confirm flow依赖进程内状态，默认保持单 worker，避免恢复/取消流程失真。
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-18765} --workers ${WEB_CONCURRENCY:-1}"]

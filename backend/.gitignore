@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# Logs
+*.log
+
+# Test/Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.json
+coverage.xml
+
+# Database
+*.db
+alembic.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+frontend/dist/
+
+# Misc
+backend.log
