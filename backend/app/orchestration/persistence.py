@@ -59,10 +59,22 @@ _BOOTSTRAP_STATEMENTS = (
 def _normalize_checkpointer_conn_string(database_url: str) -> str:
     """将 SQLAlchemy 异步连接字符串转换为 LangGraph 检查点可用的格式"""
     if database_url.startswith("postgresql+asyncpg://"):
-        return "postgresql://" + database_url.removeprefix("postgresql+asyncpg://")
-    if database_url.startswith("postgres+asyncpg://"):
-        return "postgres://" + database_url.removeprefix("postgres+asyncpg://")
-    return database_url
+        conn_str = "postgresql://" + database_url.removeprefix("postgresql+asyncpg://")
+    elif database_url.startswith("postgres+asyncpg://"):
+        conn_str = "postgres://" + database_url.removeprefix("postgres+asyncpg://")
+    else:
+        conn_str = database_url
+
+    # 移除可能存在的 sslmode 参数，避免与 asyncpg 的 ssl 参数冲突
+    if "?" in conn_str:
+        base, params = conn_str.split("?", 1)
+        param_list = [p for p in params.split("&") if not p.startswith("sslmode=")]
+        if param_list:
+            conn_str = base + "?" + "&".join(param_list)
+        else:
+            conn_str = base
+
+    return conn_str
 
 
 async def ensure_postgres_checkpointer_setup(database_url: str) -> None:
