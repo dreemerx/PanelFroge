@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    image: ghcr.io/dreemerx/panelforge-frontend:latest
     depends_on:
       - backend
     ports:
