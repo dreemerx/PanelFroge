@@ -35,14 +35,20 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./backend/.env
+      - ./backend/.env.docker
     environment:
-      # host 网络模式下使用 localhost 连接，避免 asyncpg 对非 localhost 默认启用 SSL
-      DATABASE_URL: postgresql+asyncpg://panelforge:panelforge_dev@localhost:5433/panelforge
-      REDIS_URL: redis://localhost:6379/0
+      # 使用容器名连接 postgres 和 redis
+      DATABASE_URL: postgresql+asyncpg://panelforge:panelforge_dev@postgres:5432/panelforge
+      REDIS_URL: redis://redis:6379/0
       # task_manager / confirm 依赖进程内状态，当前实现默认单 worker 才安全
       WEB_CONCURRENCY: "1"
-    network_mode: host
+      # 排除容器内部服务的代理（大小写都设置，覆盖 Docker Desktop 系统级代理）
+      NO_PROXY: postgres,redis,localhost,127.0.0.1
+      no_proxy: postgres,redis,localhost,127.0.0.1
+      # asyncpg 对非 localhost 默认启用 SSL，显式禁用
+      PGSSLMODE: disable
+    ports:
+      - "18765:18765"
     volumes:
       - ./backend/app/static:/app/app/static
     restart: unless-stopped

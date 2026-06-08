@@ -40,6 +40,8 @@ RESTART_REQUIRED_KEYS = {
     "PUBLIC_BASE_URL",
 }
 RESTART_REQUIRED_PREFIXES = ("DATABASE_", "REDIS_")
+# 这些键始终使用环境变量值，不应被数据库中的旧值覆盖（例如 Docker 与本地开发地址不同）
+ENV_ONLY_KEYS = {"DATABASE_URL", "REDIS_URL"}
 
 SETTINGS_ENV_FIELD_MAP = {name.upper(): name for name in Settings.model_fields}
 SETTINGS_DEFAULTS = Settings()
@@ -289,6 +291,8 @@ class ConfigService:
         items = res.scalars().all()
         overrides: dict[str, Any] = {}
         for item in items:
+            if item.key.upper() in ENV_ONLY_KEYS:
+                continue
             field_name = SETTINGS_ENV_FIELD_MAP.get(item.key.upper())
             if not field_name:
                 continue

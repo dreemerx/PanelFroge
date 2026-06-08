@@ -65,13 +65,9 @@ def _normalize_checkpointer_conn_string(database_url: str) -> str:
     else:
         conn_str = database_url
 
-    # 移除可能存在的查询参数
+    # 移除可能存在的查询参数（避免 sslmode 等参数干扰 asyncpg）
     if "?" in conn_str:
         conn_str = conn_str.split("?")[0]
-
-    # 非 localhost 连接时禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL
-    if "localhost" not in conn_str and "127.0.0.1" not in conn_str:
-        conn_str += "?sslmode=disable"
 
     return conn_str
 
@@ -90,12 +86,8 @@ async def ensure_postgres_checkpointer_setup(database_url: str) -> None:
         if _checkpointer_setup_states.get(conn_str):
             return
 
-        # 当连接容器内数据库时禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL
-        connect_kwargs = {}
-        if "localhost" not in conn_str and "127.0.0.1" not in conn_str:
-            connect_kwargs["ssl"] = False
-
-        conn = await asyncpg.connect(conn_str, **connect_kwargs)
+        # 始终禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL 导致连接失败
+        conn = await asyncpg.connect(conn_str, ssl=False)
         try:
             for statement in _BOOTSTRAP_STATEMENTS:
                 await conn.execute(statement)
