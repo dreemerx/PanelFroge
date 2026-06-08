@@ -65,14 +65,13 @@ def _normalize_checkpointer_conn_string(database_url: str) -> str:
     else:
         conn_str = database_url
 
-    # 移除可能存在的 sslmode 参数，避免与 asyncpg 的 ssl 参数冲突
+    # 移除可能存在的查询参数
     if "?" in conn_str:
-        base, params = conn_str.split("?", 1)
-        param_list = [p for p in params.split("&") if not p.startswith("sslmode=")]
-        if param_list:
-            conn_str = base + "?" + "&".join(param_list)
-        else:
-            conn_str = base
+        conn_str = conn_str.split("?")[0]
+
+    # 非 localhost 连接时禁用 SSL，避免 asyncpg 对非 localhost 默认启用 SSL
+    if "localhost" not in conn_str and "127.0.0.1" not in conn_str:
+        conn_str += "?sslmode=disable"
 
     return conn_str
 
