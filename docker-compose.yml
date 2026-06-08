@@ -28,7 +28,7 @@ services:
       retries: 5
 
   backend:
-    image: ghcr.io/dreemerx/panelforge-backend:latest
+    build: ./backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,9 +42,13 @@ services:
       REDIS_URL: redis://redis:6379/0
       # task_manager / confirm 依赖进程内状态，当前实现默认单 worker 才安全
       WEB_CONCURRENCY: "1"
-      # 排除容器内部服务的代理（大小写都设置，覆盖 Docker Desktop 系统级代理）
-      NO_PROXY: postgres,redis,localhost,127.0.0.1
-      no_proxy: postgres,redis,localhost,127.0.0.1
+      # 清除 Docker Desktop 泄漏的代理设置，避免干扰外部 API 的 SSL 连接
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      http_proxy: ""
+      https_proxy: ""
+      NO_PROXY: ""
+      no_proxy: ""
       # asyncpg 对非 localhost 默认启用 SSL，显式禁用
       PGSSLMODE: disable
     ports:
